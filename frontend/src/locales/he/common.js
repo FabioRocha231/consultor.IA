@@ -993,7 +993,6 @@ const TRANSLATIONS = {
     title: "פרטיות וטיפול בנתונים",
     description:
       "זוהי התצורה שלך לאופן שבו ספקים צד שלישי מחוברים ו-AnythingLLM מטפלים בנתונים שלך.",
-    anonymous: "טלמטריה אנונימית מופעלת",
   },
   connectors: {
     "search-placeholder": "חפש מחברי נתונים",

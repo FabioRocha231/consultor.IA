@@ -1034,7 +1034,6 @@ const TRANSLATIONS = {
     title: "Privātums un datu apstrāde",
     description:
       "Šī ir jūsu konfigurācija tam, kā savienotie trešo pušu pakalpojumu sniedzēji un AnythingLLM apstrādā jūsu datus.",
-    anonymous: "Anonīmā telemetrija iespējota",
   },
   connectors: {
     "search-placeholder": "Meklēt datu savienotājus",

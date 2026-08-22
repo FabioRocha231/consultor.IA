@@ -1302,7 +1302,6 @@ const TRANSLATIONS = {
     title: "Privatnost i rukovanje podacima",
     description:
       "Ovo je vaša konfiguracija za način na koji povezani pružatelji usluga trećih strana i AnythingLLM rukuju vašim podacima.",
-    anonymous: "Anonimna telemetrija omogućena",
   },
   connectors: {
     "search-placeholder": "Pretraži konektore podataka",

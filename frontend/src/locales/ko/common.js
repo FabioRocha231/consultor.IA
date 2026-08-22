@@ -1000,7 +1000,6 @@ const TRANSLATIONS = {
     title: "개인정보와 데이터 처리",
     description:
       "연결된 타사 제공자와 AnythingLLM이 데이터를 처리하는 방식을 구성합니다.",
-    anonymous: "익명 원격 분석 활성화",
   },
   connectors: {
     "search-placeholder": "데이터 커넥터 검색",

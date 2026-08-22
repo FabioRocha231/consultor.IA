@@ -925,7 +925,6 @@ const TRANSLATIONS = {
     title: "Privatliv & datahåndtering",
     description:
       "Dette er din konfiguration for, hvordan tilsluttede tredjepartsudbydere og AnythingLLM håndterer dine data.",
-    anonymous: "Anonym telemetri aktiveret",
   },
   connectors: {
     "search-placeholder": "Søg efter datakonnektorer",

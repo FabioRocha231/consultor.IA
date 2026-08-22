@@ -942,7 +942,6 @@ const TRANSLATIONS = {
     title: "Gizlilik & Veri İşleme",
     description:
       "Bağlantılı üçüncü taraf sağlayıcılarla ve AnythingLLM ile verilerinizin nasıl ele alındığını burada yapılandırabilirsiniz.",
-    anonymous: "Anonim Telemetri Etkin",
   },
   connectors: {
     "search-placeholder": "Veri bağlayıcılarını ara",

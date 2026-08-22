@@ -951,7 +951,6 @@ const TRANSLATIONS = {
     title: "Confidentialité et gestion des données",
     description:
       "Voici votre configuration pour la gestion des données et des fournisseurs tiers connectés avec AnythingLLM.",
-    anonymous: "Télémétrie anonyme activée",
   },
   connectors: {
     "search-placeholder": "Rechercher des connecteurs de données",

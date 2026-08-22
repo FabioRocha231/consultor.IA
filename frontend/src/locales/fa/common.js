@@ -920,7 +920,6 @@ const TRANSLATIONS = {
     title: "حریم خصوصی و مدیریت داده‌ها",
     description:
       "این پیکربندی شما برای نحوه مدیریت داده‌ها توسط ارائه‌دهندگان شخص ثالث متصل و AnythingLLM است.",
-    anonymous: "ارسال تله‌متری ناشناس فعال است",
   },
   connectors: {
     "search-placeholder": "اتصال‌دهنده‌های داده",

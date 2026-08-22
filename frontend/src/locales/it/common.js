@@ -949,7 +949,6 @@ const TRANSLATIONS = {
     title: "Privacy e gestione dei dati",
     description:
       "Questa è la tua configurazione per il modo in cui i provider terzi connessi e AnythingLLM gestiscono i tuoi dati.",
-    anonymous: "Telemetria anonima abilitata",
   },
   connectors: {
     "search-placeholder": "Connettori di dati",

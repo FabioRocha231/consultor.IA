@@ -1042,7 +1042,6 @@ const TRANSLATIONS = {
     title: "Prywatność i obsługa danych",
     description:
       "Jest to konfiguracja sposobu, w jaki połączeni dostawcy zewnętrzni i AnythingLLM przetwarzają dane użytkownika.",
-    anonymous: "Włączona anonimowa telemetria",
   },
   connectors: {
     "search-placeholder": "Wyszukaj źródła danych",

@@ -1005,7 +1005,6 @@ const TRANSLATIONS = {
     title: "Privaatsus ja andmetöötlus",
     description:
       "Konfiguratsioon kolmandate osapoolte ja AnythingLLM-i andmekäitluse kohta.",
-    anonymous: "Anonüümne telemeetria lubatud",
   },
   connectors: {
     "search-placeholder": "Otsi andmepistikuid",

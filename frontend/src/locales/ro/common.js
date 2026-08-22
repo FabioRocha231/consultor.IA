@@ -297,7 +297,6 @@ const TRANSLATIONS = {
     title: "Confidențialitate & Gestionarea datelor",
     description:
       "Aceasta este configurația ta pentru modul în care furnizorii terți conectați și AnythingLLM gestionează datele tale.",
-    anonymous: "Telemetrie anonimă activată",
   },
   connectors: {
     "search-placeholder": "Caută conectori de date",
