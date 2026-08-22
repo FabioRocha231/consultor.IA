@@ -22,8 +22,8 @@ on:
       - '**/.env.example'
       - '.github/ISSUE_TEMPLATE/**/*'
       - '.devcontainer/**/*'
-      - 'embed/**/*' # Embed is submodule
-      - 'browser-extension/**/*' # Chrome extension is submodule
+      - 'embed/**/*' # Embed widget (vendored)
+      - 'browser-extension/**/*' # Chrome extension (vendored)
       - 'server/utils/agents/aibitat/example/**/*' # Do not push new image for local dev testing of new aibitat images.
       - 'extras/**/*' # Extra is just for news and other local content.
       - 'open-computer/**/*'
