@@ -5,21 +5,14 @@ import Highlighter from "react-highlight-words";
 import { Link, useSearchParams } from "react-router-dom";
 import paths from "@/utils/paths";
 import ChatPromptHistory from "./ChatPromptHistory";
-import PublishEntityModal from "@/components/CommunityHub/PublishEntityModal";
-import { useModal } from "@/hooks/useModal";
 import System from "@/models/system";
 
-export default function ChatPromptSettings({
-  workspace,
-  setHasChanges,
-  hasChanges,
-}) {
+export default function ChatPromptSettings({ workspace, setHasChanges }) {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
 
   // Prompt state
   const [prompt, setPrompt] = useState(workspace?.openAiPrompt ?? "");
-  const [savedPrompt, setSavedPrompt] = useState(workspace?.openAiPrompt ?? "");
   const [defaultSystemPrompt, setDefaultSystemPrompt] = useState("");
 
   // UI state
@@ -32,20 +25,6 @@ export default function ChatPromptSettings({
   const promptHistoryRef = useRef(null);
   const historyButtonRef = useRef(null);
 
-  // Modals
-  const {
-    isOpen: showPublishModal,
-    closeModal: closePublishModal,
-    openModal: openPublishModal,
-  } = useModal();
-
-  // Derived state
-  const isDirty = prompt !== savedPrompt;
-  const hasBeenModified =
-    defaultSystemPrompt && savedPrompt?.trim() !== defaultSystemPrompt?.trim();
-  const showPublishButton =
-    !isEditing && prompt?.trim().length >= 10 && (isDirty || hasBeenModified);
-
   // Load variables and handle focus on mount
   useEffect(() => {
     async function setupVariableHighlighting() {
@@ -56,11 +35,6 @@ export default function ChatPromptSettings({
     if (searchParams.get("action") === "focus-system-prompt")
       setIsEditing(true);
   }, [searchParams]);
-
-  // Update saved prompt when parent clears hasChanges
-  useEffect(() => {
-    if (!hasChanges) setSavedPrompt(prompt);
-  }, [hasChanges, prompt]);
 
   // Auto-focus textarea when editing
   useEffect(() => {
@@ -74,7 +48,6 @@ export default function ChatPromptSettings({
       setDefaultSystemPrompt(defaultSystemPrompt);
       if (!workspace?.openAiPrompt && defaultSystemPrompt) {
         setPrompt(defaultSystemPrompt);
-        setSavedPrompt(defaultSystemPrompt);
       }
     });
   }, []);
@@ -101,12 +74,6 @@ export default function ChatPromptSettings({
     setHasChanges(true);
   };
 
-  const handlePublishFromHistory = (historicalPrompt) => {
-    openPublishModal();
-    setShowPromptHistory(false);
-    setTimeout(() => setPrompt(historicalPrompt), 0);
-  };
-
   // Restore to default system prompt, if no default system prompt is set
   const handleRestoreToDefaultSystemPrompt = () => {
     System.fetchDefaultSystemPrompt().then(({ defaultSystemPrompt }) => {
@@ -122,7 +89,6 @@ export default function ChatPromptSettings({
         workspaceSlug={workspace.slug}
         show={showPromptHistory}
         onRestore={handleRestoreFromHistory}
-        onPublishClick={handlePublishFromHistory}
         onClose={() => setShowPromptHistory(false)}
       />
       <div className="flex flex-col gap-y-[8px]">
@@ -240,32 +206,9 @@ export default function ChatPromptSettings({
                 Restore to Default
               </button>
             )}
-            <PublishPromptCTA
-              hidden={!showPublishButton}
-              onClick={openPublishModal}
-            />
           </div>
         </div>
       </div>
-      <PublishEntityModal
-        show={showPublishModal}
-        onClose={closePublishModal}
-        entityType="system-prompt"
-        entity={prompt}
-      />
     </>
-  );
-}
-
-function PublishPromptCTA({ hidden = false, onClick }) {
-  if (hidden) return null;
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="border-none text-primary-button hover:text-white light:hover:text-black text-xs font-medium"
-    >
-      Publish to Community Hub
-    </button>
   );
 }

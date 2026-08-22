@@ -44,7 +44,6 @@ class BaseImageGenerator {
     const imageSize =
       size || process.env.IMAGE_GEN_SIZE_PREF || DEFAULT_IMAGE_SIZE;
     const result = await this.requestImage(prompt, imageSize, signal);
-    this._sendImageTelemetry("image_generated");
     return result;
   }
 
@@ -105,24 +104,7 @@ class BaseImageGenerator {
     } else {
       throw new Error("Image edit returned no image data.");
     }
-    this._sendImageTelemetry("image_generated", {
-      withReferences: images.length > 0,
-    });
     return result;
-  }
-
-  /**
-   * Emits a telemetry event if Telemetry is turned on.
-   * @param {string} event
-   * @param {Object} [additionalOpts]
-   */
-  _sendImageTelemetry(event, additionalOpts = {}) {
-    const { Telemetry } = require("../../models/telemetry");
-    Telemetry.sendTelemetry(event, {
-      ...additionalOpts,
-      provider: this.className,
-      model: this.model,
-    }).catch(() => {});
   }
 
   /**

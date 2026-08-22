@@ -15,7 +15,6 @@ const {
   EphemeralAgentHandler,
   EphemeralEventListener,
 } = require("../agents/ephemeral");
-const { Telemetry } = require("../../models/telemetry");
 const { CollectorApi } = require("../collectorApi");
 const fs = require("fs");
 const path = require("path");
@@ -164,8 +163,6 @@ async function chatSync({
       chatMode,
     })
   ) {
-    await Telemetry.sendTelemetry("agent_chat_started");
-
     // Initialize the EphemeralAgentHandler to handle non-continuous
     // conversations with agents since this is over REST.
     const agentHandler = new EphemeralAgentHandler({
@@ -538,8 +535,6 @@ async function streamChat({
       chatMode,
     })
   ) {
-    await Telemetry.sendTelemetry("agent_chat_started");
-
     // Initialize the EphemeralAgentHandler to handle non-continuous
     // conversations with agents since this is over REST.
     const agentHandler = new EphemeralAgentHandler({

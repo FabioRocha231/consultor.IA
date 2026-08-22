@@ -37,7 +37,7 @@ const SystemSettings = {
   /** A default system prompt that is used when no other system prompt is set or available to the function caller. */
   saneDefaultSystemPrompt:
     "Given the following conversation, relevant context, and a follow up question, reply with an answer to the current question the user is asking. The current date and time is {datetime}. Return only your response to the question given the above information following the users instructions as needed.",
-  protectedFields: ["multi_user_mode", "hub_api_key", "onboarding_complete"],
+  protectedFields: ["multi_user_mode", "onboarding_complete"],
   publicFields: [
     "footer_data",
     "support_email",
@@ -68,7 +68,6 @@ const SystemSettings = {
   ],
   supportedFields: [
     "logo_filename",
-    "telemetry_id",
     "footer_data",
     "support_email",
 
@@ -97,9 +96,6 @@ const SystemSettings = {
 
     // beta feature flags
     "experimental_live_file_sync",
-
-    // Hub settings
-    "hub_api_key",
 
     // Memory/Personalization
     "memory_enabled",
@@ -438,10 +434,6 @@ const SystemSettings = {
         new MetaGenerator().clearConfig();
       }
     },
-    hub_api_key: (apiKey) => {
-      if (!apiKey) return null;
-      return String(apiKey);
-    },
     default_system_prompt: (prompt) => {
       if (typeof prompt !== "string" || !prompt) return null;
       if (prompt.trim() === SystemSettings.saneDefaultSystemPrompt)
@@ -470,8 +462,6 @@ const SystemSettings = {
       MultiUserMode: await this.isMultiUserMode(),
       MemoryEnabled: await this.memoriesEnabled(),
       MemoryAutoExtraction: await this.memoryAutoExtractionSetting(),
-      DisableTelemetry: process.env.DISABLE_TELEMETRY || "false",
-
       // --------------------------------------------------------
       // Embedder Provider Selection Settings & Configs
       // --------------------------------------------------------
@@ -796,8 +786,6 @@ const SystemSettings = {
   markOnboardingComplete: async function () {
     try {
       await this._updateSettings({ onboarding_complete: true });
-      const { Telemetry } = require("./telemetry");
-      await Telemetry.sendTelemetry("onboarding_complete");
       return true;
     } catch (error) {
       console.error(error.message);
@@ -1096,22 +1084,6 @@ const SystemSettings = {
         (await SystemSettings.get({ label: "experimental_live_file_sync" }))
           ?.value === "enabled",
     };
-  },
-
-  /**
-   * Get user configured Community Hub Settings
-   * Connection key is used to authenticate with the Community Hub API
-   * for your account.
-   * @returns {Promise<{connectionKey: string}>}
-   */
-  hubSettings: async function () {
-    try {
-      const hubKey = await this.get({ label: "hub_api_key" });
-      return { connectionKey: hubKey?.value || null };
-    } catch (error) {
-      console.error(error.message);
-      return { connectionKey: null };
-    }
   },
 
   simpleSSO: {
