@@ -18,7 +18,7 @@ export default function DataHandling({ setHeader, setForwardBtn, setBackBtn }) {
   }, []);
 
   function handleForward() {
-    navigate(paths.onboarding.survey());
+    navigate(paths.home());
   }
 
   function handleBack() {

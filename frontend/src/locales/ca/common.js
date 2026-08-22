@@ -1142,7 +1142,6 @@ const TRANSLATIONS = {
     title: "Privadesa i gestió de dades",
     description:
       "Aquesta és la teva configuració de com els proveïdors de tercers connectats i AnythingLLM gestionen les teves dades.",
-    anonymous: "Telemetria anònima activada",
   },
   connectors: {
     "search-placeholder": "Cerca connectors de dades",

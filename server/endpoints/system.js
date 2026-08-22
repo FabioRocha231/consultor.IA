@@ -40,7 +40,6 @@ const {
   LOGO_FILENAME,
   isDefaultFilename,
 } = require("../utils/files/logo");
-const { Telemetry } = require("../models/telemetry");
 const { ApiKey } = require("../models/apiKeys");
 const { getCustomModels } = require("../utils/helpers/customModels");
 const { WorkspaceChats } = require("../models/workspaceChats");
@@ -266,12 +265,6 @@ function systemEndpoints(app) {
           return;
         }
 
-        await Telemetry.sendTelemetry(
-          "login_event",
-          { multiUserMode: false },
-          existingUser?.id
-        );
-
         await EventLogs.logEvent(
           "login_event",
           {
@@ -326,7 +319,6 @@ function systemEndpoints(app) {
           return;
         }
 
-        await Telemetry.sendTelemetry("login_event", { multiUserMode: false });
         await EventLogs.logEvent("login_event", {
           ip: request.ip || "Unknown IP",
           multiUserMode: false,
@@ -366,11 +358,6 @@ function systemEndpoints(app) {
         });
       }
 
-      await Telemetry.sendTelemetry(
-        "login_event",
-        { multiUserMode: true },
-        token.user.id
-      );
       await EventLogs.logEvent(
         "login_event",
         {
@@ -682,9 +669,6 @@ function systemEndpoints(app) {
           },
           true
         );
-        await Telemetry.sendTelemetry("enabled_multi_user_mode", {
-          multiUserMode: true,
-        });
         await EventLogs.logEvent("multi_user_mode_enabled", {}, user?.id);
         response.status(200).json({ success: !!user, error });
       } catch (e) {

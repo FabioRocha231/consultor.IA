@@ -960,7 +960,6 @@ const TRANSLATIONS = {
     title: "隐私和数据处理",
     description:
       "这是你对如何处理连接的第三方提供商和AnythingLLM的数据的配置。",
-    anonymous: "启用匿名遥测",
   },
   connectors: {
     "search-placeholder": "搜索数据连接器",

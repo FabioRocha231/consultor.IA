@@ -1029,7 +1029,6 @@ const TRANSLATIONS = {
     title: "Privacidade & Dados",
     description:
       "Configurações de como provedores terceiros e o AnythingLLM lidam com seus dados.",
-    anonymous: "Telemetria Anônima Ativa",
   },
   connectors: {
     "search-placeholder": "Buscar conectores",

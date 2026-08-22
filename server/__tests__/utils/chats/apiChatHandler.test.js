@@ -29,11 +29,6 @@ jest.mock("../../../models/workspaceChats", () => ({
     markThreadHistoryInvalidV2: jest.fn(),
   },
 }));
-jest.mock("../../../models/telemetry", () => ({
-  Telemetry: {
-    sendTelemetry: jest.fn(),
-  },
-}));
 jest.mock("../../../utils/chats/index", () => ({
   chatPrompt: jest.fn(),
   sourceIdentifier: jest.fn(),

@@ -1,4 +1,3 @@
-const { Telemetry } = require("../../models/telemetry");
 const { resetAllVectorStores } = require("../vectorStore/resetAllVectorStores");
 
 const KEY_MAPPING = {
@@ -567,16 +566,6 @@ const KEY_MAPPING = {
     envKey: "JWT_SECRET",
     checks: [requiresForceMode],
   },
-  DisableTelemetry: {
-    envKey: "DISABLE_TELEMETRY",
-    checks: [],
-    preUpdate: [
-      (_, __, nextValue) => {
-        if (nextValue === "true") Telemetry.sendTelemetry("telemetry_disabled");
-      },
-    ],
-  },
-
   // Agent Integration ENVs
   AgentSerpApiKey: {
     envKey: "AGENT_SERPAPI_API_KEY",
@@ -1467,9 +1456,6 @@ function dumpENV() {
     "SIMPLE_SSO_ENABLED",
     "SIMPLE_SSO_NO_LOGIN",
     "SIMPLE_SSO_NO_LOGIN_REDIRECT",
-    // Community Hub
-    "COMMUNITY_HUB_BUNDLE_DOWNLOADS_ENABLED",
-
     // Nvidia NIM Keys that are automatically managed
     "NVIDIA_NIM_LLM_MODEL_TOKEN_LIMIT",
 

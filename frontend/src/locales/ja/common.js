@@ -912,7 +912,6 @@ const TRANSLATIONS = {
     title: "プライバシーとデータ処理",
     description:
       "これは、接続されているサードパーティプロバイダーとAnythingLLMがデータをどのように処理するかの設定です。",
-    anonymous: "匿名テレメトリが有効",
   },
   connectors: {
     "search-placeholder": "データコネクタを検索",

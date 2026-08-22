@@ -1296,7 +1296,6 @@ const TRANSLATIONS = {
     title: "Privasi & Penanganan Data",
     description:
       "Ini adalah konfigurasi Anda tentang bagaimana penyedia pihak ketiga yang terhubung dan AnythingLLM menangani data Anda.",
-    anonymous: "Telemetri Anonim Diaktifkan",
   },
   connectors: {
     "search-placeholder": "Cari konektor data",

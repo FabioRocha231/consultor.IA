@@ -1056,7 +1056,6 @@ const TRANSLATIONS = {
     title: "Soukromí a zpracování dat",
     description:
       "Toto je vaše konfigurace, jak připojené třetí strany a AnythingLLM zpracovávají vaše data.",
-    anonymous: "Anonymní telemetrie je povolena",
   },
   connectors: {
     "search-placeholder": "Hledat datové konektory",

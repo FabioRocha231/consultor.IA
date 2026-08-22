@@ -1057,7 +1057,6 @@ const TRANSLATIONS = {
     title: "Privatumas ir duomenų tvarkymas",
     description:
       "Tai jūsų konfigūracija, kaip prijungti trečiųjų šalių tiekėjai ir AnythingLLM tvarko jūsų duomenis.",
-    anonymous: "Anoniminė telemetrija įjungta",
   },
   connectors: {
     "search-placeholder": "Ieškoti duomenų jungčių",

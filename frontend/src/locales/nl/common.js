@@ -935,7 +935,6 @@ const TRANSLATIONS = {
     title: "Privacy & Gegevensverwerking",
     description:
       "Dit is je configuratie voor hoe verbonden derden en AnythingLLM je gegevens verwerken.",
-    anonymous: "Anonieme Telemetrie Ingeschakeld",
   },
   connectors: {
     "search-placeholder": "Zoek naar data-connectoren",

@@ -24,8 +24,6 @@ const { v4: uuidv4 } = require("uuid");
 const prisma = require("../utils/prisma");
 const { getVectorDbClass } = require("../utils/helpers");
 const { fileData } = require("../utils/files");
-const { Telemetry } = require("../models/telemetry");
-
 const queue = [];
 const cancelled = new Set();
 let processing = false;
@@ -57,7 +55,6 @@ async function processQueue() {
     totalDocs: batch.length,
   });
 
-  Telemetry.sendTelemetry("documents_embedded_in_workspace").catch(() => {});
   const embedded = [];
   const failedToEmbed = [];
 

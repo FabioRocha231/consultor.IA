@@ -1048,7 +1048,6 @@ const TRANSLATIONS = {
     title: "Datenschutz & Datenverarbeitung",
     description:
       "Dies ist Ihre Konfiguration dafür, wie verbundene Drittanbieter und AnythingLLM Ihre Daten behandeln.",
-    anonymous: "Anonyme Telemetrie aktiviert",
   },
   connectors: {
     "search-placeholder": "Datenverbindungen durchsuchen",

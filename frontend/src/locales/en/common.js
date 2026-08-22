@@ -1299,7 +1299,6 @@ const TRANSLATIONS = {
     title: "Privacy & Data-Handling",
     description:
       "This is your configuration for how connected third party providers and AnythingLLM handle your data.",
-    anonymous: "Anonymous Telemetry Enabled",
   },
   connectors: {
     "search-placeholder": "Search data connectors",

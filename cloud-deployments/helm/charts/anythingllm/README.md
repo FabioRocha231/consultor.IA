@@ -95,7 +95,6 @@ helm install my-anythingllm ./anythingllm -f values-secret.yaml
 | Key                                | Type   | Default                      | Description |
 | ---------------------------------- | ------ | ---------------------------- | ----------- |
 | affinity                           | object | `{}`                         |             |
-| config.DISABLE_TELEMETRY           | string | `"true"`                     |             |
 | config.GID                         | string | `"1000"`                     |             |
 | config.NODE_ENV                    | string | `"production"`               |             |
 | config.STORAGE_DIR                 | string | `"/storage"`                 |             |

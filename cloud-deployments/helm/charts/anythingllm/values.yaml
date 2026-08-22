@@ -115,7 +115,6 @@ securityContext: {}
 # for all available environment variables to use as configuration options
 #
 config:
-  DISABLE_TELEMETRY: "true"
   NODE_ENV: production
   STORAGE_DIR: /app/server/storage
   UID: "1000"
@@ -266,4 +265,3 @@ extraObjects: []
 #         remoteRef:
 #           key: secret/data/anything-llm
 #           property: open_ai_key
-

@@ -927,7 +927,6 @@ const TRANSLATIONS = {
     title: "Quyền riêng tư & Xử lý Dữ liệu",
     description:
       "Đây là cấu hình của bạn về cách các nhà cung cấp bên thứ ba được kết nối và AnythingLLM xử lý dữ liệu của bạn.",
-    anonymous: "Đã Bật Telemetry Ẩn danh",
   },
   connectors: {
     "search-placeholder": "Tìm kiếm trình kết nối dữ liệu",
