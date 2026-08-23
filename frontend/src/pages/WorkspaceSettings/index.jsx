@@ -14,8 +14,7 @@ import {
   Wrench,
 } from "@phosphor-icons/react";
 import paths from "@/utils/paths";
-import { Link } from "react-router-dom";
-import { NavLink } from "react-router-dom";
+import { Link, Navigate, NavLink } from "react-router-dom";
 import GeneralAppearance from "./GeneralAppearance";
 import ChatSettings from "./ChatSettings";
 import VectorDatabase from "./VectorDatabase";
@@ -76,6 +75,13 @@ function ShowWorkspaceChat() {
 
   if (loading) return <FullScreenLoader />;
 
+  const isAdmin = user?.role === "admin";
+  if (!isAdmin && ["vector-database", "agent-config"].includes(tab)) {
+    return (
+      <Navigate to={paths.workspace.settings.generalAppearance(slug)} replace />
+    );
+  }
+
   const TabContent = TABS[tab];
   return (
     <div className="w-screen h-screen overflow-hidden bg-zinc-950 light:bg-slate-50 flex">
@@ -105,6 +111,7 @@ function ShowWorkspaceChat() {
             title={t("workspaces—settings.vector")}
             icon={<Database className="h-6 w-6" />}
             to={paths.workspace.settings.vectorDatabase(slug)}
+            visible={isAdmin}
           />
           <TabItem
             title={t("workspaces—settings.members")}
@@ -116,6 +123,7 @@ function ShowWorkspaceChat() {
             title={t("workspaces—settings.agent")}
             icon={<Robot className="h-6 w-6" />}
             to={paths.workspace.settings.agentConfig(slug)}
+            visible={isAdmin}
           />
         </div>
         <div className="px-16 py-6">
