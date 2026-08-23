@@ -1,0 +1,22 @@
+{
+  "domains": [
+    "api.openai.com",
+    "api.anthropic.com",
+    "api.groq.com",
+    "api.mistral.ai",
+    "api.cohere.ai",
+    "api.together.xyz",
+    "api.deepseek.com",
+    "openrouter.ai",
+    "api.perplexity.ai",
+    "generativelanguage.googleapis.com",
+    "qdrant.io",
+    "localhost",
+    "127.0.0.1"
+  ],
+  "wildcards": [
+    "*.amazonaws.com",
+    "*.googleapis.com",
+    "*.openai.azure.com"
+  ]
+}
