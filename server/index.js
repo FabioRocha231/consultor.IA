@@ -2,6 +2,7 @@ process.env.NODE_ENV === "development"
   ? require("dotenv").config({ path: `.env.${process.env.NODE_ENV}` })
   : require("dotenv").config();
 
+require("./utils/observability").start();
 require("./utils/logger")();
 require("./utils/boot/patchSdkTimeouts")();
 require("./utils/helpers/modelPricing"); // boots the model pricing cache refresh
@@ -45,22 +46,15 @@ const {
   googleAgentSkillEndpoints,
 } = require("./endpoints/utils/googleAgentSkillEndpoints");
 const { memoryEndpoints } = require("./endpoints/memory");
+const { requestContext } = require("./middleware/requestContext");
 const { httpLogger } = require("./middleware/httpLogger");
+const { healthEndpoints } = require("./endpoints/health");
 const app = express();
 const apiRouter = express.Router();
 const FILE_LIMIT = "3GB";
 
-// Only log HTTP requests in development mode and if the ENABLE_HTTP_LOGGER environment variable is set to true
-if (
-  process.env.NODE_ENV === "development" &&
-  !!process.env.ENABLE_HTTP_LOGGER
-) {
-  app.use(
-    httpLogger({
-      enableTimestamps: !!process.env.ENABLE_HTTP_LOGGER_TIMESTAMPS,
-    })
-  );
-}
+app.use(requestContext);
+app.use(httpLogger());
 app.use(cors({ origin: true }));
 app.use(bodyParser.text({ limit: FILE_LIMIT }));
 app.use(bodyParser.json({ limit: FILE_LIMIT }));
@@ -79,6 +73,7 @@ if (!!process.env.ENABLE_HTTPS) {
 
 app.use("/api", apiRouter);
 systemEndpoints(apiRouter);
+healthEndpoints(apiRouter);
 extensionEndpoints(apiRouter);
 workspaceEndpoints(apiRouter);
 workspaceThreadEndpoints(apiRouter);

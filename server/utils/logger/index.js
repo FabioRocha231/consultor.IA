@@ -1,55 +1,45 @@
 const winston = require("winston");
+const jsonFormat = require("./json");
 
 class Logger {
   logger = console;
   static _instance;
   constructor() {
     if (Logger._instance) return Logger._instance;
-    this.logger =
-      process.env.NODE_ENV === "production" ? this.getWinstonLogger() : console;
+    this.logger = this.getWinstonLogger();
     Logger._instance = this;
   }
 
   getWinstonLogger() {
     const logger = winston.createLogger({
-      level: "info",
-      defaultMeta: { service: "backend" },
-      transports: [
-        new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format.colorize(),
-            winston.format.printf(
-              ({ level, message, service, origin = "" }) => {
-                return `\x1b[36m[${service}]\x1b[0m${origin ? `\x1b[33m[${origin}]\x1b[0m` : ""} ${level}: ${message}`;
-              }
-            )
-          ),
-        }),
-      ],
+      level: process.env.LOG_LEVEL || "info",
+      format: winston.format.combine(jsonFormat, winston.format.json()),
+      transports: [new winston.transports.Console()],
     });
 
-    function formatArgs(args) {
-      return args
-        .map((arg) => {
-          if (arg instanceof Error) {
-            return arg.stack; // If argument is an Error object, return its stack trace
-          } else if (typeof arg === "object") {
-            return JSON.stringify(arg); // Convert objects to JSON string
-          } else {
-            return arg; // Otherwise, return as-is
-          }
-        })
-        .join(" ");
+    function write(level, args) {
+      const first = args[0];
+      let message = "";
+      if (typeof first === "string") message = args.shift();
+      else if (first instanceof Error) {
+        message = first.stack;
+        args.shift();
+      }
+      const metadata = args.length ? { args } : undefined;
+      logger[level](message || "log", metadata);
     }
 
     console.log = function (...args) {
-      logger.info(formatArgs(args));
+      write("info", args);
     };
     console.error = function (...args) {
-      logger.error(formatArgs(args));
+      write("error", args);
     };
     console.info = function (...args) {
-      logger.warn(formatArgs(args));
+      write("warn", args);
+    };
+    console.warn = function (...args) {
+      write("warn", args);
     };
     return logger;
   }
@@ -58,9 +48,10 @@ class Logger {
 /**
  * Sets and overrides Console methods for logging when called.
  * This is a singleton method and will not create multiple loggers.
- * @returns {winston.Logger | console} - instantiated logger interface.
+ * @returns {winston.Logger} - instantiated logger interface.
  */
 function setLogger() {
   return new Logger().logger;
 }
 module.exports = setLogger;
+module.exports.getLogger = () => new Logger().logger;
