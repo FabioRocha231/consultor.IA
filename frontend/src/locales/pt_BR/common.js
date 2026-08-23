@@ -1,6 +1,85 @@
 // Anything with "null" requires a translation. Contribute to translation via a PR!
 const TRANSLATIONS = {
   onboarding: {
+    welcome:
+      "Vamos configurar sua IA para o negócio. Sem configuração técnica: só perguntas sobre sua empresa.",
+    continue: "Avançar",
+    back: "Voltar",
+    publish: "Publicar",
+    published: "Pronto! Sua empresa foi publicada.",
+    publishing: "Publicando...",
+    progress: "Etapa {{current}} de {{total}}",
+    requiredField: "Preencha este campo para continuar.",
+    companyName: "Nome da empresa",
+    companyNamePlaceholder: "Ex.: Padaria Estrela",
+    slug: "Endereço",
+    identity: "Identidade",
+    identityPlaceholder: "Como sua empresa se apresenta?",
+    dropFiles: "Arraste PDFs, DOCX, TXT ou MD aqui",
+    dropFilesActive: "Solte os arquivos aqui",
+    dropFilesHint: "Você também pode usar URL ou texto abaixo.",
+    knowledgeUrl: "Cole uma URL com o conteúdo da empresa",
+    knowledgeText: "Cole textos de apoio, como FAQ ou políticas",
+    removeFile: "Remover",
+    test: "Testar",
+    testing: "Testando...",
+    testMessage: "Escreva uma mensagem como seu cliente faria",
+    testMessageRequired: "Escreva uma mensagem para testar.",
+    publishTitle: "Pronto para publicar?",
+    publishDescription:
+      "Sua empresa fica publicada e a IA passa a ser usada no dia a dia.",
+    publishIncomplete: "Complete as etapas 1 a 4 antes de publicar.",
+    step: {
+      1: {
+        title: "Configurar Empresa",
+        description: "Comece com o nome e a identidade da sua empresa.",
+      },
+      2: {
+        title: "Qual o segmento?",
+        description: "Escolha a área principal da sua empresa.",
+      },
+      3: {
+        title: "Qual o objetivo da IA?",
+        description: "O que a IA deve ajudar a alcançar?",
+      },
+      4: {
+        title: "Adicionar conhecimento",
+        description:
+          "Envie documentos, links ou textos que a IA deve conhecer.",
+      },
+      5: {
+        title: "Definir comportamento",
+        description: "Como a IA deve se comunicar com seus clientes?",
+      },
+      6: {
+        title: "Testar",
+        description: "Experimente uma resposta antes de publicar.",
+      },
+      7: {
+        title: "Publicar",
+        description: "Confirme e coloque sua empresa no ar.",
+      },
+    },
+    segments: {
+      atendimento: "Atendimento",
+      vendas: "Vendas",
+      suporte: "Suporte",
+      conhecimento_interno: "Conhecimento interno",
+      operacoes: "Operações",
+    },
+    objectives: {
+      atender_cliente: "Atender cliente",
+      capturar_lead: "Capturar lead",
+      suporte_interno: "Suporte interno",
+      base_conhecimento: "Base de conhecimento",
+      automacao: "Automação",
+    },
+    tones: {
+      profissional: "Profissional",
+      amigavel: "Amigável",
+      comercial: "Comercial",
+      objetivo: "Objetivo",
+    },
     home: {
       getStarted: "Começar",
       welcome: "Bem-vindo",
