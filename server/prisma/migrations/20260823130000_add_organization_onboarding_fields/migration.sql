@@ -1,3 +1,3 @@
 -- AlterTable
-ALTER TABLE "organization" ADD COLUMN "wizardState" JSONB;
-ALTER TABLE "organization" ADD COLUMN "publishedAt" TIMESTAMP(3);
+ALTER TABLE "organization" ADD COLUMN IF NOT EXISTS "wizardState" JSONB;
+ALTER TABLE "organization" ADD COLUMN IF NOT EXISTS "publishedAt" TIMESTAMP(3);
