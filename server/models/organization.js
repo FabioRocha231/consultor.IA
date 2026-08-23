@@ -1,5 +1,29 @@
 const { v4: uuidv4 } = require("uuid");
 const prisma = require("../utils/prisma");
+const { EncryptionManager } = require("../utils/EncryptionManager");
+
+const N8N_API_KEY_PREFIX = "enc:v1:";
+
+function encryptN8nApiKey(value) {
+  if (!value) return null;
+  const raw = String(value);
+  if (raw.startsWith(N8N_API_KEY_PREFIX)) return raw;
+  const encrypted = new EncryptionManager().encrypt(raw);
+  return encrypted ? `${N8N_API_KEY_PREFIX}${encrypted}` : null;
+}
+
+function decryptN8nApiKey(value) {
+  if (!value) return null;
+  const raw = String(value);
+  if (!raw.startsWith(N8N_API_KEY_PREFIX)) return raw;
+  return new EncryptionManager().decrypt(raw.slice(N8N_API_KEY_PREFIX.length));
+}
+
+function withoutSecret(organization) {
+  if (!organization || !("n8nApiKey" in organization)) return organization;
+  const { n8nApiKey: _n8nApiKey, ...publicOrganization } = organization;
+  return publicOrganization;
+}
 
 const Organization = {
   _table: "organization",
@@ -11,7 +35,7 @@ const Organization = {
     "operacoes",
   ],
   VALID_STATUSES: ["active", "suspended", "archived"],
-  writable: ["name", "segment", "status"],
+  writable: ["name", "segment", "status", "n8nWebhookUrl", "n8nApiKey"],
 
   validations: {
     name: (value) => {
@@ -37,6 +61,25 @@ const Organization = {
           )}`
         );
       return String(value);
+    },
+    n8nWebhookUrl: (value) => {
+      if (value === null || value === undefined || value === "") return null;
+      const raw = String(value).trim();
+      let parsed;
+      try {
+        parsed = new URL(raw);
+      } catch {
+        throw new Error("n8nWebhookUrl must be a valid absolute URL");
+      }
+      if (!["http:", "https:"].includes(parsed.protocol))
+        throw new Error("n8nWebhookUrl must use http or https");
+      if (!parsed.hostname) throw new Error("n8nWebhookUrl must have a host");
+      return raw;
+    },
+    n8nApiKey: (value) => {
+      if (value === null || value === undefined || value === "") return null;
+      if (typeof value !== "string") return null;
+      return encryptN8nApiKey(value);
     },
   },
 
@@ -64,7 +107,7 @@ const Organization = {
           segment: this.validations.segment(segment),
         },
       });
-      return { organization, error: null };
+      return { organization: withoutSecret(organization), error: null };
     } catch (error) {
       console.error("FAILED TO CREATE ORGANIZATION.", error.message);
       return { organization: null, error: error.message };
@@ -73,7 +116,10 @@ const Organization = {
 
   get: async function (id) {
     try {
-      return await prisma.organization.findUnique({ where: { id } });
+      const organization = await prisma.organization.findUnique({
+        where: { id },
+      });
+      return withoutSecret(organization);
     } catch (error) {
       console.error("FAILED TO GET ORGANIZATION.", error.message);
       return null;
@@ -82,7 +128,26 @@ const Organization = {
 
   getBySlug: async function (slug) {
     try {
-      return await prisma.organization.findUnique({ where: { slug } });
+      const organization = await prisma.organization.findUnique({
+        where: { slug },
+      });
+      return withoutSecret(organization);
+    } catch (error) {
+      console.error("FAILED TO GET ORGANIZATION.", error.message);
+      return null;
+    }
+  },
+
+  getWithN8nSecrets: async function (id) {
+    try {
+      const organization = await prisma.organization.findUnique({
+        where: { id },
+      });
+      if (!organization) return null;
+      return {
+        ...organization,
+        n8nApiKey: decryptN8nApiKey(organization.n8nApiKey),
+      };
     } catch (error) {
       console.error("FAILED TO GET ORGANIZATION.", error.message);
       return null;
@@ -106,7 +171,7 @@ const Organization = {
         where: { id },
         data: updates,
       });
-      return { organization, error: null };
+      return { organization: withoutSecret(organization), error: null };
     } catch (error) {
       console.error("FAILED TO UPDATE ORGANIZATION.", error.message);
       return { organization: null, error: error.message };
@@ -139,9 +204,10 @@ const Organization = {
 
   all: async function () {
     try {
-      return await prisma.organization.findMany({
+      const organizations = await prisma.organization.findMany({
         orderBy: { createdAt: "asc" },
       });
+      return organizations.map(withoutSecret);
     } catch (error) {
       console.error("FAILED TO GET ORGANIZATIONS.", error.message);
       return [];

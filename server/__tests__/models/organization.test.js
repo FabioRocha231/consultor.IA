@@ -1,4 +1,7 @@
 /* eslint-env jest, node */
+process.env.SIG_KEY = "test-signing-key";
+process.env.SIG_SALT = "test-signing-salt";
+
 jest.mock("../../utils/prisma", () => ({
   organization: {
     findUnique: jest.fn(),
@@ -113,5 +116,48 @@ describe("Organization model", () => {
     expect(prisma.organization.findMany).toHaveBeenCalledWith({
       orderBy: { createdAt: "asc" },
     });
+  });
+
+  it("encrypts n8nApiKey on write and decrypts it for internal reads", async () => {
+    const stored = {
+      id: "org-1",
+      name: "Acme",
+      slug: "acme",
+      n8nWebhookUrl: "https://org.n8n.cloud/webhook/test",
+      n8nApiKey: "enc:v1:stored",
+    };
+    prisma.organization.update.mockResolvedValue(stored);
+
+    const result = await Organization.update("org-1", {
+      n8nWebhookUrl: stored.n8nWebhookUrl,
+      n8nApiKey: "secret-key",
+    });
+
+    const updateCall = prisma.organization.update.mock.calls[0][0];
+    expect(updateCall.data.n8nApiKey).toMatch(/^enc:v1:/);
+    expect(updateCall.data.n8nApiKey).not.toContain("secret-key");
+    expect(updateCall.data.n8nWebhookUrl).toBe(stored.n8nWebhookUrl);
+    expect(result.organization).not.toHaveProperty("n8nApiKey");
+
+    prisma.organization.findUnique.mockResolvedValueOnce({
+      ...stored,
+      n8nApiKey: updateCall.data.n8nApiKey,
+    });
+    const withSecrets = await Organization.getWithN8nSecrets("org-1");
+    expect(withSecrets.n8nApiKey).toBe("secret-key");
+  });
+
+  it("does not expose n8nApiKey through public getters", async () => {
+    prisma.organization.findUnique.mockResolvedValue({
+      id: "org-1",
+      name: "Acme",
+      slug: "acme",
+      n8nApiKey: "enc:v1:stored",
+    });
+
+    expect(await Organization.get("org-1")).not.toHaveProperty("n8nApiKey");
+    expect(await Organization.getBySlug("acme")).not.toHaveProperty(
+      "n8nApiKey"
+    );
   });
 });
