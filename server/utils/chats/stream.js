@@ -7,6 +7,7 @@ const { addChatCostToMetrics } = require("../helpers/modelPricing");
 const { writeResponseChunk } = require("../helpers/chat/responses");
 const { abortConnectorOnClientDisconnect } = require("../helpers/abortSignals");
 const { grepAgents } = require("./agents");
+const { recordLlmCall, withSpan } = require("../observability/ai");
 const {
   grepCommand,
   VALID_COMMANDS,
@@ -17,7 +18,37 @@ const {
 
 const VALID_CHAT_MODE = ["automatic", "chat", "query"];
 
+// PR 09: root chat.request span for the HTTP stream-chat flow.
 async function streamChatWithWorkspace(
+  response,
+  workspace,
+  message,
+  chatMode = "automatic",
+  user = null,
+  thread = null,
+  attachments = []
+) {
+  return withSpan(
+    "chat.request",
+    () =>
+      streamChatWithWorkspaceInner(
+        response,
+        workspace,
+        message,
+        chatMode,
+        user,
+        thread,
+        attachments
+      ),
+    {
+      "chat.workspace_slug": workspace?.slug,
+      "chat.mode": chatMode ?? workspace?.chatMode ?? "automatic",
+      "chat.attachments_count": attachments?.length ?? 0,
+    }
+  );
+}
+
+async function streamChatWithWorkspaceInner(
   response,
   workspace,
   message,
@@ -213,12 +244,23 @@ async function streamChatWithWorkspace(
   }
 
   const { fillSourceWindow } = require("../helpers/chat");
-  const filledSources = fillSourceWindow({
-    nDocs: workspace?.topN || 4,
-    searchResults: vectorSearchResults.sources,
-    history: rawHistory,
-    filterIdentifiers: pinnedDocIdentifiers,
-  });
+  const filledSources = await withSpan(
+    "rag.context_build",
+    () =>
+      fillSourceWindow({
+        nDocs: workspace?.topN || 4,
+        searchResults: vectorSearchResults.sources,
+        history: rawHistory,
+        filterIdentifiers: pinnedDocIdentifiers,
+      }),
+    {
+      "rag.chunks_retrieved": vectorSearchResults.sources.length,
+      "rag.context_tokens": contextTexts.reduce(
+        (total, text) => total + Math.ceil(String(text || "").length / 4),
+        0
+      ),
+    }
+  );
 
   // Why does contextTexts get all the info, but sources only get current search?
   // This is to give the ability of the LLM to "comprehend" a contextual response without
@@ -281,48 +323,117 @@ async function streamChatWithWorkspace(
     rawHistory
   );
 
-  // If streaming is not explicitly enabled for connector
-  // we do regular waiting of a response and send a single chunk.
-  if (LLMConnector.streamingEnabled() !== true) {
-    console.log(
-      `\x1b[31m[STREAMING DISABLED]\x1b[0m Streaming is not available for ${LLMConnector.constructor.name}. Will use regular chat method.`
-    );
-    const { textResponse, metrics: performanceMetrics } =
-      await LLMConnector.getChatCompletion(messages, {
-        temperature: workspace?.openAiTemp ?? LLMConnector.defaultTemp,
-        user: user,
-      });
+  // PR 09: llm.generate span and metrics around the provider completion call.
+  const llmProvider =
+    routingMetadata?.routedTo?.provider ??
+    LLMConnector?.className ??
+    LLMConnector?.constructor?.name;
+  const llmModel = routingMetadata?.routedTo?.model ?? LLMConnector?.model;
+  await withSpan(
+    "llm.generate",
+    async (span) => {
+      const startedAt = Date.now();
+      let firstTokenAt = null;
+      let streamStart = null;
+      const streaming = LLMConnector.streamingEnabled() === true;
+      span.setAttribute("llm.streaming", streaming);
 
-    completeText = textResponse;
-    metrics = addChatCostToMetrics(performanceMetrics, {
-      routingMetadata,
-      workspace,
-      connector: LLMConnector,
-    });
-    writeResponseChunk(response, {
-      uuid,
-      sources,
-      type: "textResponseChunk",
-      textResponse: completeText,
-      close: true,
-      error: false,
-      metrics,
-    });
-  } else {
-    const stream = await LLMConnector.streamGetChatCompletion(messages, {
-      temperature: workspace?.openAiTemp ?? LLMConnector.defaultTemp,
-      user: user,
-    });
-    completeText = await LLMConnector.handleStream(response, stream, {
-      uuid,
-      sources,
-    });
-    metrics = addChatCostToMetrics(stream.metrics, {
-      routingMetadata,
-      workspace,
-      connector: LLMConnector,
-    });
-  }
+      try {
+        // If streaming is not explicitly enabled for connector
+        // we do regular waiting of a response and send a single chunk.
+        if (!streaming) {
+          console.log(
+            `\x1b[31m[STREAMING DISABLED]\x1b[0m Streaming is not available for ${LLMConnector.constructor.name}. Will use regular chat method.`
+          );
+          const { textResponse, metrics: performanceMetrics } =
+            await LLMConnector.getChatCompletion(messages, {
+              temperature: workspace?.openAiTemp ?? LLMConnector.defaultTemp,
+              user: user,
+            });
+
+          completeText = textResponse;
+          metrics = addChatCostToMetrics(performanceMetrics, {
+            routingMetadata,
+            workspace,
+            connector: LLMConnector,
+          });
+          writeResponseChunk(response, {
+            uuid,
+            sources,
+            type: "textResponseChunk",
+            textResponse: completeText,
+            close: true,
+            error: false,
+            metrics,
+          });
+        } else {
+          const stream = await LLMConnector.streamGetChatCompletion(messages, {
+            temperature: workspace?.openAiTemp ?? LLMConnector.defaultTemp,
+            user: user,
+          });
+          streamStart = stream?.start;
+          const originalWrite = response.write;
+          if (typeof originalWrite === "function") {
+            response.write = (chunk, ...args) => {
+              if (
+                !firstTokenAt &&
+                typeof chunk === "string" &&
+                chunk.includes('"type":"textResponseChunk"')
+              ) {
+                firstTokenAt = Date.now();
+                span.addEvent("llm.first_token", {
+                  "llm.time_to_first_token_ms": streamStart
+                    ? firstTokenAt - streamStart
+                    : null,
+                });
+              }
+              return originalWrite(chunk, ...args);
+            };
+          }
+          try {
+            completeText = await LLMConnector.handleStream(response, stream, {
+              uuid,
+              sources,
+            });
+          } finally {
+            if (typeof originalWrite === "function")
+              response.write = originalWrite;
+          }
+          metrics = addChatCostToMetrics(stream.metrics, {
+            routingMetadata,
+            workspace,
+            connector: LLMConnector,
+          });
+        }
+
+        const latencyMs = metrics?.duration
+          ? Math.round(Number(metrics.duration) * 1000)
+          : Date.now() - startedAt;
+        recordLlmCall({
+          provider: llmProvider,
+          model: llmModel,
+          inputTokens: metrics?.prompt_tokens,
+          outputTokens: metrics?.completion_tokens,
+          latencyMs,
+          ttftMs:
+            firstTokenAt && streamStart ? firstTokenAt - streamStart : null,
+          cost: metrics?.totalCost,
+        });
+      } catch (error) {
+        recordLlmCall({
+          provider: llmProvider,
+          model: llmModel,
+          latencyMs: Date.now() - startedAt,
+          error,
+        });
+        throw error;
+      }
+    },
+    {
+      "llm.provider": llmProvider,
+      "llm.model": llmModel,
+    }
+  );
 
   if (completeText?.length > 0) {
     const { chat } = await WorkspaceChats.new({
