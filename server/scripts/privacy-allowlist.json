@@ -17,6 +17,8 @@
   "wildcards": [
     "*.amazonaws.com",
     "*.googleapis.com",
-    "*.openai.azure.com"
+    "*.openai.azure.com",
+    "*.n8n.cloud",
+    "*.n8n.io"
   ]
 }

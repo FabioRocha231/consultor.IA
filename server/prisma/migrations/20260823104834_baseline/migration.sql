@@ -58,6 +58,8 @@ CREATE TABLE "organization" (
     "slug" TEXT NOT NULL,
     "segment" TEXT,
     "status" TEXT NOT NULL DEFAULT 'active',
+    "n8nWebhookUrl" TEXT,
+    "n8nApiKey" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

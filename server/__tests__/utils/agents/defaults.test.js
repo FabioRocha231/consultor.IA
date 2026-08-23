@@ -2,12 +2,18 @@
 process.env.STORAGE_DIR = __dirname;
 process.env.NODE_ENV = "test";
 
-const { SystemPromptVariables } = require("../../../models/systemPromptVariables");
+const {
+  SystemPromptVariables,
+} = require("../../../models/systemPromptVariables");
 const { SystemSettings } = require("../../../models/systemSettings");
 const Provider = require("../../../utils/agents/aibitat/providers/ai-provider");
+const { Organization } = require("../../../models/organization");
 
 jest.mock("../../../models/systemPromptVariables");
 jest.mock("../../../models/systemSettings");
+jest.mock("../../../models/organization", () => ({
+  Organization: { get: jest.fn() },
+}));
 jest.mock("../../../utils/agents/imported", () => ({
   activeImportedPlugins: jest.fn().mockReturnValue([]),
 }));
@@ -50,7 +56,9 @@ describe("WORKSPACE_AGENT.getDefinition", () => {
       user
     );
     expect(definition.role).toBe(expectedPrompt);
-    expect(SystemPromptVariables.expandSystemPromptVariables).toHaveBeenCalledWith(
+    expect(
+      SystemPromptVariables.expandSystemPromptVariables
+    ).toHaveBeenCalledWith(
       SystemSettings.saneDefaultSystemPrompt,
       user.id,
       workspace.id
@@ -61,13 +69,17 @@ describe("WORKSPACE_AGENT.getDefinition", () => {
     const workspace = {
       id: 1,
       name: "Test Workspace",
-      openAiPrompt: "You are a helpful assistant for {workspace.name}. The current user is {user.name}.",
+      openAiPrompt:
+        "You are a helpful assistant for {workspace.name}. The current user is {user.name}.",
     };
     const user = { id: 1 };
     const provider = "openai";
 
-    const expandedPrompt = "You are a helpful assistant for Test Workspace. The current user is John Doe.";
-    SystemPromptVariables.expandSystemPromptVariables.mockResolvedValue(expandedPrompt);
+    const expandedPrompt =
+      "You are a helpful assistant for Test Workspace. The current user is John Doe.";
+    SystemPromptVariables.expandSystemPromptVariables.mockResolvedValue(
+      expandedPrompt
+    );
 
     const definition = await WORKSPACE_AGENT.getDefinition(
       provider,
@@ -75,11 +87,9 @@ describe("WORKSPACE_AGENT.getDefinition", () => {
       user
     );
 
-    expect(SystemPromptVariables.expandSystemPromptVariables).toHaveBeenCalledWith(
-      workspace.openAiPrompt,
-      user.id,
-      workspace.id
-    );
+    expect(
+      SystemPromptVariables.expandSystemPromptVariables
+    ).toHaveBeenCalledWith(workspace.openAiPrompt, user.id, workspace.id);
     expect(definition.role).toBe(expandedPrompt);
   });
 
@@ -91,8 +101,11 @@ describe("WORKSPACE_AGENT.getDefinition", () => {
     };
     const user = null;
     const provider = "lmstudio";
-    const expandedPrompt = "You are a helpful assistant. Today is January 1, 2024.";
-    SystemPromptVariables.expandSystemPromptVariables.mockResolvedValue(expandedPrompt);
+    const expandedPrompt =
+      "You are a helpful assistant. Today is January 1, 2024.";
+    SystemPromptVariables.expandSystemPromptVariables.mockResolvedValue(
+      expandedPrompt
+    );
 
     const definition = await WORKSPACE_AGENT.getDefinition(
       provider,
@@ -100,11 +113,9 @@ describe("WORKSPACE_AGENT.getDefinition", () => {
       user
     );
 
-    expect(SystemPromptVariables.expandSystemPromptVariables).toHaveBeenCalledWith(
-      workspace.openAiPrompt,
-      null,
-      workspace.id
-    );
+    expect(
+      SystemPromptVariables.expandSystemPromptVariables
+    ).toHaveBeenCalledWith(workspace.openAiPrompt, null, workspace.id);
     expect(definition.role).toBe(expandedPrompt);
   });
 
@@ -132,11 +143,51 @@ describe("WORKSPACE_AGENT.getDefinition", () => {
       null
     );
 
-    expect(definition.role).toBe(await Provider.systemPrompt({ workspace, user }));
-    expect(SystemPromptVariables.expandSystemPromptVariables).toHaveBeenCalledWith(
+    expect(definition.role).toBe(
+      await Provider.systemPrompt({ workspace, user })
+    );
+    expect(
+      SystemPromptVariables.expandSystemPromptVariables
+    ).toHaveBeenCalledWith(
       SystemSettings.saneDefaultSystemPrompt,
       null,
       workspace.id
     );
+  });
+
+  it("includes n8n tools when the organization has n8nWebhookUrl", async () => {
+    Organization.get.mockResolvedValue({
+      id: "org-1",
+      n8nWebhookUrl: "https://org.n8n.cloud/webhook/test",
+    });
+
+    const definition = await WORKSPACE_AGENT.getDefinition(
+      "openai",
+      { id: 2, organizationId: "org-1", openAiPrompt: null },
+      null
+    );
+
+    expect(definition.functions).toEqual(
+      expect.arrayContaining([
+        "n8n-tools#createLead",
+        "n8n-tools#requestHumanSupport",
+      ])
+    );
+  });
+
+  it("does not include n8n tools when the organization has no webhook", async () => {
+    Organization.get.mockResolvedValue({
+      id: "org-1",
+      n8nWebhookUrl: null,
+    });
+
+    const definition = await WORKSPACE_AGENT.getDefinition(
+      "openai",
+      { id: 2, organizationId: "org-1", openAiPrompt: null },
+      null
+    );
+
+    expect(definition.functions).not.toContain("n8n-tools#createLead");
+    expect(definition.functions).not.toContain("n8n-tools#requestHumanSupport");
   });
 });
