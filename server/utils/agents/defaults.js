@@ -5,6 +5,7 @@ const Provider = require("./aibitat/providers/ai-provider");
 const ImportedPlugin = require("./imported");
 const { AgentFlows } = require("../agentFlows");
 const MCPCompatibilityLayer = require("../MCP");
+const { Organization } = require("../../models/organization");
 
 // This is a list of skills that are built-in and default enabled.
 const DEFAULT_SKILLS = [
@@ -87,6 +88,7 @@ const WORKSPACE_AGENT = {
       role,
       functions: [
         ...(await agentSkillsFromSystemSettings()),
+        ...(await n8nToolsIfConfigured(workspace)),
         ...clarifyingQuestionsSkills,
         ...ImportedPlugin.activeImportedPlugins(),
         ...AgentFlows.activeFlowPlugins(),
@@ -95,6 +97,21 @@ const WORKSPACE_AGENT = {
     };
   },
 };
+
+/**
+ * n8n tools are only visible when the workspace organization has a webhook
+ * configured. Without this gate the agent could still see tools that always
+ * fail, so the runtime never registers them at all.
+ * @param {import("@prisma/client").workspaces|null} workspace
+ * @returns {Promise<string[]>}
+ */
+async function n8nToolsIfConfigured(workspace = null) {
+  if (!workspace?.organizationId) return [];
+  const organization = await Organization.get(workspace.organizationId);
+  if (!organization?.n8nWebhookUrl) return [];
+  const parent = AgentPlugins.n8nTools;
+  return parent.plugin.map((child) => `${parent.name}#${child.name}`);
+}
 
 /**
  * Conditionally include the request-user-input sub-tools in the workspace agent's
@@ -261,5 +278,6 @@ module.exports = {
   USER_AGENT,
   WORKSPACE_AGENT,
   agentSkillsFromSystemSettings,
+  n8nToolsIfConfigured,
   resolveAgentSkill,
 };
