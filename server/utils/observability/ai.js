@@ -8,6 +8,32 @@ const {
 const AI_SCOPE = "consultor-ia.ai";
 const LLM_LATENCY_BUCKETS = [100, 500, 1000, 2000, 5000, 10000, 30000];
 const RAG_SCORE_BUCKETS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+const snapshotState = {
+  startedAt: new Date(),
+  llm: {
+    requests: 0,
+    errors: 0,
+    errorsByKind: {},
+    inputTokens: 0,
+    outputTokens: 0,
+    estimatedCostUsd: 0,
+    latency: [],
+    ttft: [],
+  },
+  rag: {
+    queries: 0,
+    noResults: 0,
+    fallback: 0,
+    humanHandoff: 0,
+    latency: [],
+  },
+  tool: {
+    calls: 0,
+    errors: 0,
+    errorsByKind: {},
+    latency: [],
+  },
+};
 
 function getAITracer() {
   return trace.getTracer(AI_SCOPE);
@@ -44,6 +70,43 @@ function errorKind(error = null) {
 function finiteNumber(value = null) {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
+}
+
+function percentile(values = [], percent = 50) {
+  const sorted = values
+    .filter((value) => Number.isFinite(value))
+    .sort((a, b) => a - b);
+  if (sorted.length === 0) return null;
+  const index = Math.max(0, Math.ceil((percent / 100) * sorted.length) - 1);
+  return sorted[Math.min(sorted.length - 1, index)];
+}
+
+function getMetricSnapshot() {
+  return {
+    llmRequests: snapshotState.llm.requests,
+    llmErrors: snapshotState.llm.errors,
+    llmErrorsByKind: { ...snapshotState.llm.errorsByKind },
+    llmInputTokens: snapshotState.llm.inputTokens,
+    llmOutputTokens: snapshotState.llm.outputTokens,
+    llmEstimatedCostUsd: snapshotState.llm.estimatedCostUsd,
+    llmLatencyP50Ms: percentile(snapshotState.llm.latency, 50),
+    llmLatencyP95Ms: percentile(snapshotState.llm.latency, 95),
+    ttftP50Ms: percentile(snapshotState.llm.ttft, 50),
+    ttftP95Ms: percentile(snapshotState.llm.ttft, 95),
+    ragQueries: snapshotState.rag.queries,
+    ragNoResults: snapshotState.rag.noResults,
+    ragFallback: snapshotState.rag.fallback,
+    ragHumanHandoff: snapshotState.rag.humanHandoff,
+    ragRetrievalP50Ms: percentile(snapshotState.rag.latency, 50),
+    ragRetrievalP95Ms: percentile(snapshotState.rag.latency, 95),
+    toolCalls: snapshotState.tool.calls,
+    toolCallErrors: snapshotState.tool.errors,
+    toolCallErrorsByKind: { ...snapshotState.tool.errorsByKind },
+    toolCallLatencyP50Ms: percentile(snapshotState.tool.latency, 50),
+    toolCallLatencyP95Ms: percentile(snapshotState.tool.latency, 95),
+    since: snapshotState.startedAt.toISOString(),
+    until: new Date().toISOString(),
+  };
 }
 
 function getInstruments() {
@@ -121,6 +184,7 @@ function recordLlmCall({
   organization = null,
 } = {}) {
   if (isDisabled()) return;
+  snapshotState.llm.requests += 1;
   const instruments = getInstruments();
   const labels = {
     provider: String(provider || "unknown"),
@@ -130,24 +194,43 @@ function recordLlmCall({
 
   const result = error ? "error" : "success";
   instruments.llmRequests.add(1, { ...labels, result });
-  if (error)
+  if (error) {
+    const kind = errorKind(error);
+    snapshotState.llm.errors += 1;
+    snapshotState.llm.errorsByKind[kind] =
+      (snapshotState.llm.errorsByKind[kind] || 0) + 1;
     instruments.llmErrors.add(1, {
       ...labels,
-      "error.kind": errorKind(error),
+      "error.kind": kind,
     });
+  }
 
   const input = finiteNumber(inputTokens);
   const output = finiteNumber(outputTokens);
-  if (input !== null) instruments.llmInputTokens.add(input, labels);
-  if (output !== null) instruments.llmOutputTokens.add(output, labels);
+  if (input !== null) {
+    snapshotState.llm.inputTokens += input;
+    instruments.llmInputTokens.add(input, labels);
+  }
+  if (output !== null) {
+    snapshotState.llm.outputTokens += output;
+    instruments.llmOutputTokens.add(output, labels);
+  }
 
   const latency = finiteNumber(latencyMs);
-  if (latency !== null) instruments.llmLatency.record(latency, labels);
+  if (latency !== null) {
+    snapshotState.llm.latency.push(latency);
+    instruments.llmLatency.record(latency, labels);
+  }
   const ttft = finiteNumber(ttftMs);
-  if (ttft !== null) instruments.llmTimeToFirstToken.record(ttft, labels);
+  if (ttft !== null) {
+    snapshotState.llm.ttft.push(ttft);
+    instruments.llmTimeToFirstToken.record(ttft, labels);
+  }
   const estimatedCost = finiteNumber(cost);
-  if (estimatedCost !== null && estimatedCost > 0)
+  if (estimatedCost !== null && estimatedCost > 0) {
+    snapshotState.llm.estimatedCostUsd += estimatedCost;
     instruments.llmEstimatedCost.add(estimatedCost, labels);
+  }
 
   setActiveSpanAttributes({
     "llm.provider": labels.provider,
@@ -170,6 +253,7 @@ function recordRagCall({
   humanHandoff = false,
 } = {}) {
   if (isDisabled()) return;
+  snapshotState.rag.queries += 1;
   const instruments = getInstruments();
   const labels = { vector_db: String(vectorDb || "unknown") };
   instruments.ragQueries.add(1, labels);
@@ -179,14 +263,25 @@ function recordRagCall({
   const score = finiteNumber(bestScore);
   if (score !== null) instruments.ragBestScore.record(score, labels);
   const latency = finiteNumber(latencyMs);
-  if (latency !== null) instruments.ragRetrievalLatency.record(latency, labels);
-  if (noResults) instruments.ragNoResults.add(1, labels);
-  if (fallback)
+  if (latency !== null) {
+    snapshotState.rag.latency.push(latency);
+    instruments.ragRetrievalLatency.record(latency, labels);
+  }
+  if (noResults) {
+    snapshotState.rag.noResults += 1;
+    instruments.ragNoResults.add(1, labels);
+  }
+  if (fallback) {
+    snapshotState.rag.fallback += 1;
     instruments.ragFallback.add(1, {
       ...labels,
       "fallback.kind": String(fallback),
     });
-  if (humanHandoff) instruments.ragHumanHandoff.add(1, labels);
+  }
+  if (humanHandoff) {
+    snapshotState.rag.humanHandoff += 1;
+    instruments.ragHumanHandoff.add(1, labels);
+  }
 
   setActiveSpanAttributes({
     "rag.chunks_retrieved": chunkCount,
@@ -202,16 +297,25 @@ function recordToolCall({
   error = null,
 } = {}) {
   if (isDisabled()) return;
+  snapshotState.tool.calls += 1;
   const instruments = getInstruments();
   const labels = { "tool.name": String(toolName || "unknown") };
   instruments.toolCalls.add(1, labels);
   const latency = finiteNumber(latencyMs);
-  if (latency !== null) instruments.toolCallLatency.record(latency, labels);
-  if (error)
+  if (latency !== null) {
+    snapshotState.tool.latency.push(latency);
+    instruments.toolCallLatency.record(latency, labels);
+  }
+  if (error) {
+    const kind = errorKind(error);
+    snapshotState.tool.errors += 1;
+    snapshotState.tool.errorsByKind[kind] =
+      (snapshotState.tool.errorsByKind[kind] || 0) + 1;
     instruments.toolCallErrors.add(1, {
       ...labels,
-      "error.kind": errorKind(error),
+      "error.kind": kind,
     });
+  }
   setActiveSpanAttributes({
     "tool.name": labels["tool.name"],
     "tool.latency_ms": latency,
@@ -300,6 +404,7 @@ function recordFeedback({
 module.exports = {
   getAITracer,
   getAIMeter,
+  getMetricSnapshot,
   withSpan,
   recordLlmCall,
   recordRagCall,

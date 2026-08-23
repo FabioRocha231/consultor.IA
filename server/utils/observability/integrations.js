@@ -6,6 +6,13 @@ const {
 } = require("@opentelemetry/api");
 
 const INTEGRATIONS_SCOPE = "consultor-ia.integrations";
+const snapshotState = {
+  startedAt: new Date(),
+  n8nRequests: 0,
+  n8nFailures: 0,
+  errorsByKind: {},
+  latency: [],
+};
 
 function getIntegrationTracer() {
   return trace.getTracer(INTEGRATIONS_SCOPE);
@@ -22,6 +29,27 @@ function isDisabled() {
 function finiteNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
+}
+
+function percentile(values = [], percent = 50) {
+  const sorted = values
+    .filter((value) => Number.isFinite(value))
+    .sort((a, b) => a - b);
+  if (sorted.length === 0) return null;
+  const index = Math.max(0, Math.ceil((percent / 100) * sorted.length) - 1);
+  return sorted[Math.min(sorted.length - 1, index)];
+}
+
+function getIntegrationMetricSnapshot() {
+  return {
+    n8nRequests: snapshotState.n8nRequests,
+    n8nFailures: snapshotState.n8nFailures,
+    n8nErrorsByKind: { ...snapshotState.errorsByKind },
+    n8nLatencyP50Ms: percentile(snapshotState.latency, 50),
+    n8nLatencyP95Ms: percentile(snapshotState.latency, 95),
+    since: snapshotState.startedAt.toISOString(),
+    until: new Date().toISOString(),
+  };
 }
 
 function setSpanAttributes(span, attributes = {}) {
@@ -94,6 +122,7 @@ function recordN8nCall({
   span = null,
 } = {}) {
   if (isDisabled()) return;
+  snapshotState.n8nRequests += 1;
   const instruments = getInstruments();
   const labels = {
     tool: String(tool || "unknown"),
@@ -103,14 +132,21 @@ function recordN8nCall({
     ...labels,
     result: result === "error" ? "error" : "success",
   });
-  if (result === "error")
+  if (result === "error") {
+    const kind = String(errorKind || "other");
+    snapshotState.n8nFailures += 1;
+    snapshotState.errorsByKind[kind] =
+      (snapshotState.errorsByKind[kind] || 0) + 1;
     instruments.n8nFailures.add(1, {
       ...labels,
-      "error.kind": String(errorKind || "other"),
+      "error.kind": kind,
     });
+  }
   const latency = finiteNumber(latencyMs);
-  if (latency !== null)
+  if (latency !== null) {
+    snapshotState.latency.push(latency);
     instruments.n8nLatency.record(latency, { tool: labels.tool });
+  }
 
   setSpanAttributes(span, {
     "n8n.tool": labels.tool,
@@ -124,6 +160,7 @@ function recordN8nCall({
 module.exports = {
   getIntegrationMeter,
   getIntegrationTracer,
+  getIntegrationMetricSnapshot,
   recordN8nCall,
   withSpan,
 };
