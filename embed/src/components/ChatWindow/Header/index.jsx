@@ -22,10 +22,7 @@ export default function ChatWindowHeader({
   const [showingOptions, setShowOptions] = useState(false);
   const menuRef = useRef();
   const buttonRef = useRef();
-  const safeIconUrl = isAllowedEmbedUrl(
-    iconUrl,
-    settings.allowExternalDomains
-  )
+  const safeIconUrl = isAllowedEmbedUrl(iconUrl, settings.allowExternalDomains)
     ? iconUrl
     : null;
 

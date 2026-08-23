@@ -8,7 +8,10 @@ export function isAllowedEmbedUrl(url = "", allowlist = []) {
 
     const hostname = parsed.hostname.toLowerCase();
     return allowlist.some((domain) => {
-      const normalized = String(domain).trim().toLowerCase().replace(/^\.+/, "");
+      const normalized = String(domain)
+        .trim()
+        .toLowerCase()
+        .replace(/^\.+/, "");
       return (
         normalized !== "" &&
         (hostname === normalized || hostname.endsWith(`.${normalized}`))
