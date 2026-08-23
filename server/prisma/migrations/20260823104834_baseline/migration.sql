@@ -184,6 +184,9 @@ CREATE TABLE "workspace_chats" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "lastUpdatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "feedbackScore" BOOLEAN,
+    "feedbackCategory" TEXT,
+    "feedbackComment" TEXT,
+    "feedbackAt" TIMESTAMP(3),
     "memory_processed" BOOLEAN,
 
     CONSTRAINT "workspace_chats_pkey" PRIMARY KEY ("id")

@@ -92,13 +92,19 @@ const Workspace = {
       })
       .catch(() => null);
   },
-  updateChatFeedback: async function (chatId, slug, feedback) {
+  updateChatFeedback: async function (
+    chatId,
+    slug,
+    feedback,
+    category = null,
+    comment = null
+  ) {
     const result = await fetch(
       `${API_BASE}/workspace/${slug}/chat-feedback/${chatId}`,
       {
         method: "POST",
         headers: baseHeaders(),
-        body: JSON.stringify({ feedback }),
+        body: JSON.stringify({ feedback, category, comment }),
       }
     )
       .then((res) => res.ok)

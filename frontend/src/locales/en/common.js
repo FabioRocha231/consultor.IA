@@ -1742,6 +1742,24 @@ const TRANSLATIONS = {
       },
     },
   },
+  feedback: {
+    thanks: "Thank you for your feedback!",
+    title: "What went wrong with this response?",
+    submit: "Submit",
+    cancel: "Cancel",
+    clear: "Clear feedback",
+    comment: {
+      label: "Comment",
+      placeholder: "Tell us more (optional)",
+    },
+    categories: {
+      informacao_incorreta: "Incorrect information",
+      informacao_desatualizada: "Outdated information",
+      nao_encontrou_resposta: "Could not find an answer",
+      resposta_confusa: "Confusing response",
+      outro: "Other",
+    },
+  },
   profile_settings: {
     edit_account: "Edit Account",
     profile_picture: "Profile Picture",

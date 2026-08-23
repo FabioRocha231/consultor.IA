@@ -9,6 +9,8 @@ const { Workspace } = require("../models/workspace");
 const { Document } = require("../models/documents");
 const { DocumentVectors } = require("../models/vectors");
 const { WorkspaceChats } = require("../models/workspaceChats");
+const { recordFeedback } = require("../utils/observability/ai");
+const { validateFeedbackInput } = require("../utils/feedbackValidation");
 const { getVectorDbClass, stripThinkingFromText } = require("../utils/helpers");
 const { handleFileUpload } = require("../utils/files/multer");
 const { validatedRequest } = require("../utils/middleware/validatedRequest");
@@ -523,7 +525,13 @@ function workspaceEndpoints(app) {
     async (request, response) => {
       try {
         const { chatId } = request.params;
-        const { feedback = null } = reqBody(request);
+        const validation = validateFeedbackInput(reqBody(request));
+        if (!validation.ok)
+          return response
+            .status(400)
+            .json({ success: false, error: validation.error });
+        const { score: feedback, category, comment } = validation.value;
+
         const user = await userFromSession(request, response);
         const existingChat = await WorkspaceChats.get({
           id: Number(chatId),
@@ -532,8 +540,34 @@ function workspaceEndpoints(app) {
         });
 
         if (!existingChat) return response.status(404).json({ success: false });
-        await WorkspaceChats.updateFeedbackScore(chatId, feedback);
-        return response.status(200).json({ success: true });
+
+        const result = await WorkspaceChats.updateFeedbackScore(chatId, {
+          score: feedback,
+          category,
+          comment,
+        });
+        if (!result.ok)
+          return response
+            .status(500)
+            .json({ success: false, error: result.error });
+
+        if (feedback !== null)
+          recordFeedback({
+            score: feedback,
+            category,
+            commentLength: comment ? comment.length : null,
+          });
+
+        return response.status(200).json({
+          success: true,
+          chat: {
+            id: result.chat.id,
+            feedbackScore: result.chat.feedbackScore,
+            feedbackCategory: result.chat.feedbackCategory,
+            feedbackComment: result.chat.feedbackComment,
+            feedbackAt: result.chat.feedbackAt,
+          },
+        });
       } catch (error) {
         console.error("Error updating chat feedback:", error);
         response.status(500).end();

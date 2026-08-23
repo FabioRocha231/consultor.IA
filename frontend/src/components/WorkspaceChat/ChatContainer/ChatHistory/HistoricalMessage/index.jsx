@@ -45,6 +45,8 @@ const HistoricalMessage = ({
   attachments = [],
   error = false,
   feedbackScore = null,
+  feedbackCategory = null,
+  feedbackComment = null,
   chatId = null,
   isLastMessage = false,
   regenerateMessage,
@@ -129,6 +131,8 @@ const HistoricalMessage = ({
           <Actions
             message={message}
             feedbackScore={feedbackScore}
+            feedbackCategory={feedbackCategory}
+            feedbackComment={feedbackComment}
             chatId={chatId}
             slug={workspace?.slug}
             isLastMessage={isLastMessage}
@@ -198,6 +202,8 @@ const HistoricalMessage = ({
             <Actions
               message={message}
               feedbackScore={feedbackScore}
+              feedbackCategory={feedbackCategory}
+              feedbackComment={feedbackComment}
               chatId={chatId}
               slug={workspace?.slug}
               isLastMessage={isLastMessage}
@@ -228,6 +234,8 @@ export default memo(
       prevProps.message === nextProps.message &&
       prevProps.isLastMessage === nextProps.isLastMessage &&
       prevProps.chatId === nextProps.chatId &&
+      prevProps.feedbackCategory === nextProps.feedbackCategory &&
+      prevProps.feedbackComment === nextProps.feedbackComment &&
       JSON.stringify(prevProps.metrics) === JSON.stringify(nextProps.metrics) &&
       JSON.stringify(prevProps.sources) === JSON.stringify(nextProps.sources) &&
       JSON.stringify(prevProps.clarifyingQuestions) ===

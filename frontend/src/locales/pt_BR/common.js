@@ -1474,6 +1474,24 @@ const TRANSLATIONS = {
     response_failed: "Não foi possível responder à mensagem.",
     response_failed_reason: "Motivo: {{reason}}",
   },
+  feedback: {
+    thanks: "Obrigado pelo seu feedback!",
+    title: "O que houve com esta resposta?",
+    submit: "Enviar",
+    cancel: "Cancelar",
+    clear: "Limpar feedback",
+    comment: {
+      label: "Comentário",
+      placeholder: "Conte mais (opcional)",
+    },
+    categories: {
+      informacao_incorreta: "Informação incorreta",
+      informacao_desatualizada: "Informação desatualizada",
+      nao_encontrou_resposta: "Não encontrou resposta",
+      resposta_confusa: "Resposta confusa",
+      outro: "Outro",
+    },
+  },
   profile_settings: {
     edit_account: "Editar conta",
     profile_picture: "Foto de perfil",

@@ -202,6 +202,9 @@ model workspace_chats {
   createdAt      DateTime @default(now())
   lastUpdatedAt  DateTime @default(now())
   feedbackScore   Boolean?
+  feedbackCategory String?
+  feedbackComment  String?
+  feedbackAt       DateTime?
   memoryProcessed Boolean? @map("memory_processed")
   users           users?   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }

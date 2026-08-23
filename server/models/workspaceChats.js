@@ -1,6 +1,14 @@
 const prisma = require("../utils/prisma");
 const { safeJSONStringify } = require("../utils/helpers/chat/responses");
 
+const VALID_FEEDBACK_CATEGORIES = [
+  "informacao_incorreta",
+  "informacao_desatualizada",
+  "nao_encontrou_resposta",
+  "resposta_confusa",
+  "outro",
+];
+
 const WorkspaceChats = {
   new: async function ({
     workspaceId,
@@ -263,21 +271,47 @@ const WorkspaceChats = {
       return [];
     }
   },
-  updateFeedbackScore: async function (chatId = null, feedbackScore = null) {
-    if (!chatId) return;
+  updateFeedbackScore: async function (chatId = null, feedback = null) {
+    if (!chatId) return { ok: false, error: "No chat id provided." };
+
+    const isObject = feedback !== null && typeof feedback === "object";
+    const rawScore = isObject ? feedback?.score ?? null : feedback ?? null;
+    const category = isObject ? feedback?.category ?? null : null;
+    const comment = isObject ? feedback?.comment ?? null : null;
+    const score =
+      rawScore === null || rawScore === undefined
+        ? null
+        : typeof rawScore === "boolean"
+          ? rawScore
+          : Number(rawScore) === 1;
+
+    if (score !== null && typeof score !== "boolean")
+      return { ok: false, error: "Invalid feedback score." };
+    if (
+      score === false &&
+      category !== null &&
+      !VALID_FEEDBACK_CATEGORIES.includes(category)
+    )
+      return { ok: false, error: "Invalid feedback category." };
+    if (comment !== null && typeof comment !== "string")
+      return { ok: false, error: "Invalid feedback comment." };
+
     try {
-      await prisma.workspace_chats.update({
+      const chat = await prisma.workspace_chats.update({
         where: {
           id: Number(chatId),
         },
         data: {
-          feedbackScore:
-            feedbackScore === null ? null : Number(feedbackScore) === 1,
+          feedbackScore: score === null ? null : Boolean(score),
+          feedbackCategory: score === false ? category : null,
+          feedbackComment: score === false ? comment : null,
+          feedbackAt: score === null ? null : new Date(),
         },
       });
-      return;
+      return { ok: true, chat };
     } catch (error) {
       console.error(error.message);
+      return { ok: false, error: error.message };
     }
   },
 
@@ -382,4 +416,4 @@ const WorkspaceChats = {
   },
 };
 
-module.exports = { WorkspaceChats };
+module.exports = { WorkspaceChats, VALID_FEEDBACK_CATEGORIES };
