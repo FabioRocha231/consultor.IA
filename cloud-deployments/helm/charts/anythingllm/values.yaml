@@ -119,6 +119,13 @@ config:
   STORAGE_DIR: /app/server/storage
   UID: "1000"
   GID: "1000"
+  # OpenTelemetry OTLP HTTP endpoint, usually the Alloy service in the cluster.
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
+  OTEL_SERVICE_NAME: consultor-ia
+  OTEL_RESOURCE_ATTRIBUTES: deployment_id=local,environment=production
+  OTEL_LOG_LEVEL: info
+  OTEL_SDK_DISABLED: "false"
+  LOG_LEVEL: info
 
 # The preferred method for setting secret environment variables
 # Ref: https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#define-a-container-environment-variable-with-data-from-a-single-secret

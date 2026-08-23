@@ -1,22 +1,22 @@
-const httpLogger =
-  ({ enableTimestamps = false }) =>
-  (req, res, next) => {
-    // Capture the original res.end to log response status
-    const originalEnd = res.end;
+const { getLogger } = require("../utils/logger");
+const { getRequestContext } = require("./requestContext");
 
-    res.end = function (chunk, encoding) {
-      // Log the request method, status code, and path
-      const statusColor = res.statusCode >= 400 ? "\x1b[31m" : "\x1b[32m"; // Red for errors, green for success
-      console.log(
-        `\x1b[32m[HTTP]\x1b[0m ${statusColor}${res.statusCode}\x1b[0m ${req.method} -> ${req.path} ${enableTimestamps ? `@ ${new Date().toLocaleTimeString("en-US", { hour12: true })}` : ""}`.trim()
-      );
-
-      // Call the original end method
-      return originalEnd.call(this, chunk, encoding);
-    };
-
-    next();
-  };
+const httpLogger = () => (req, res, next) => {
+  const started = process.hrtime.bigint();
+  res.on("finish", () => {
+    const durationMs = Number(process.hrtime.bigint() - started) / 1e6;
+    const request = getRequestContext() || {};
+    getLogger().info("http.request", {
+      request_id: request.requestId || req.request_id,
+      trace_id: request.traceId || req.trace_id,
+      method: req.method,
+      path: req.path,
+      status: res.statusCode,
+      duration_ms: Number(durationMs.toFixed(3)),
+    });
+  });
+  next();
+};
 
 module.exports = {
   httpLogger,

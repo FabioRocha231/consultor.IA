@@ -3,9 +3,12 @@ const { User } = require("../../models/user");
 const { EncryptionManager } = require("../EncryptionManager");
 const { decodeJWT } = require("../http");
 const { UserMetaCache } = require("../userLocale");
+const { traceIdFromTraceparent } = require("../../middleware/requestContext");
 const EncryptionMgr = new EncryptionManager();
 
 async function validatedRequest(request, response, next) {
+  request.trace_id =
+    traceIdFromTraceparent(request.header("traceparent")) || request.trace_id;
   const multiUserMode = await SystemSettings.isMultiUserMode();
   response.locals.multiUserMode = multiUserMode;
   if (multiUserMode)
