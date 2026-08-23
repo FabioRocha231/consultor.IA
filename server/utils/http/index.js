@@ -1,6 +1,13 @@
 process.env.NODE_ENV === "development"
   ? require("dotenv").config({ path: `.env.${process.env.NODE_ENV}` })
   : require("dotenv").config();
+const nodeBuffer = require("buffer");
+
+// Node 26 removed SlowBuffer, but jsonwebtoken's buffer-equal-constant-time
+// dependency reads it at require time.
+if (typeof nodeBuffer.SlowBuffer === "undefined")
+  nodeBuffer.SlowBuffer = nodeBuffer.Buffer;
+
 const JWT = require("jsonwebtoken");
 const { User } = require("../../models/user");
 const { jsonrepair } = require("jsonrepair");
