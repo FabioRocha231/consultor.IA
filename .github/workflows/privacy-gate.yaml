@@ -49,6 +49,65 @@ jobs:
       - name: Run network privacy smoke
         run: cd server && node scripts/privacy-scan.mjs --network --json
 
+  runtime-egress-audit:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: consultor
+          POSTGRES_PASSWORD: consultor
+          POSTGRES_DB: consultor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U consultor -d consultor"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      qdrant:
+        image: qdrant/qdrant:v1.7.4
+        ports:
+          - 6333:6333
+          - 6334:6334
+    env:
+      DB_URL: postgresql://consultor:consultor@localhost:5432/consultor
+      PRIVACY_QDRANT_URL: http://localhost:6333
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: actions/cache@v4
+        with:
+          path: server/node_modules
+          key: ${{ runner.os }}-yarn-server-${{ hashFiles('server/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-server-
+
+      - name: Install server dependencies
+        run: cd server && yarn install --frozen-lockfile
+
+      - name: Start privacy stubs
+        run: |
+          cd server
+          node scripts/privacy-llm-stub.mjs > /tmp/privacy-llm-stub.log 2>&1 &
+          node scripts/privacy-n8n-stub.mjs > /tmp/privacy-n8n-stub.log 2>&1 &
+
+      - name: Run runtime egress audit
+        run: cd server && node scripts/privacy-scan.mjs --runtime --json
+
+      - name: Upload runtime egress report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-egress-report
+          path: /tmp/privacy-runtime-report.json
+
   dependency-audit:
     runs-on: ubuntu-latest
     steps:

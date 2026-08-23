@@ -26,6 +26,7 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | Camada de configuração RAG | [ADR-008](../adr/008-rag-configuration-strategy.md) |
 | Política de logging sensível | [ADR-009](../adr/009-sensitive-logging-policy.md) |
 | Estratégia de sincronização upstream | [ADR-010](../adr/010-upstream-synchronization-strategy.md) |
+| Política de egress runtime | [ADR-011](../adr/011-runtime-egress-policy.md) |
 
 ## Índice
 
@@ -58,3 +59,5 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 - Narrativa: PT-BR.
 - Evidência: `caminho:linha`.
 - Não confirmado: `HYPOTHESIS:`.
+
+| [29-runtime-egress-policy-runbook.md](./29-runtime-egress-policy-runbook.md) | Runbook de operação da política de egress runtime |
