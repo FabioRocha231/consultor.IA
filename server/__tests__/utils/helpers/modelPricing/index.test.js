@@ -1,5 +1,4 @@
 const fs = require("fs");
-const os = require("os");
 const path = require("path");
 
 process.env.NODE_ENV = "test";
@@ -9,8 +8,9 @@ const FIXTURE = JSON.parse(
 );
 
 /**
- * The module memoizes a singleton at require time, so every test builds its
- * own instance against a fresh temp STORAGE_DIR and a mocked global fetch.
+ * The module memoizes a singleton at require time and reads the committed
+ * pricing.json snapshot. Tests redirect that file to the fixture so lookup
+ * behavior is deterministic and independent from the live snapshot.
  */
 function freshInstance() {
   const { ModelPricing } = require("../../../../utils/helpers/modelPricing");
@@ -18,76 +18,25 @@ function freshInstance() {
   return new ModelPricing();
 }
 
-function mockFetchWith(response) {
-  global.fetch = jest.fn().mockImplementation(async () => response);
-}
-
-function okResponse(data, { etag = null } = {}) {
-  return {
-    status: 200,
-    headers: { get: (key) => (key === "etag" ? etag : null) },
-    json: async () => data,
-  };
-}
-
-/** Waits for the constructor's fire-and-forget refresh to settle. */
-async function flushRefresh() {
-  await new Promise((resolve) => setTimeout(resolve, 25));
-}
-
 describe("ModelPricing", () => {
-  let tempDir;
-  const originalFetch = global.fetch;
+  const originalReadFileSync = fs.readFileSync.bind(fs);
+
+  beforeAll(() => {
+    jest.spyOn(fs, "readFileSync").mockImplementation((filePath, ...args) => {
+      if (String(filePath).endsWith("pricing.json"))
+        return JSON.stringify(FIXTURE);
+      return originalReadFileSync(filePath, ...args);
+    });
+  });
 
   beforeEach(() => {
     jest.resetModules();
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "model-pricing-test-"));
-    process.env.STORAGE_DIR = tempDir;
   });
 
-  afterEach(() => {
-    global.fetch = originalFetch;
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  });
-
-  describe("cache mechanics", () => {
-    it("fetches the remote pricing data and writes the disk cache", async () => {
-      mockFetchWith(okResponse(FIXTURE, { etag: '"abc123"' }));
+  describe("static snapshot loading", () => {
+    it("loads the committed snapshot and serves known costs", () => {
       const pricing = freshInstance();
-      await flushRefresh();
 
-      const cacheDir = path.join(tempDir, "models", "pricing");
-      expect(fs.existsSync(path.join(cacheDir, "model-pricing.json"))).toBe(
-        true
-      );
-      expect(fs.existsSync(path.join(cacheDir, ".cached_at"))).toBe(true);
-      expect(fs.readFileSync(path.join(cacheDir, ".etag"), "utf8")).toBe(
-        '"abc123"'
-      );
-      expect(pricing.isCacheStale).toBe(false);
-
-      // The disk cache is slimmed to cost objects only, dropping models
-      // with absent or null cost.
-      const cached = JSON.parse(
-        fs.readFileSync(path.join(cacheDir, "model-pricing.json"), "utf8")
-      );
-      expect(cached.openai["gpt-4o"]).toEqual({ input: 2.5, output: 10 });
-      expect(cached.openai["gpt-subscription-only"]).toBeUndefined();
-      expect(cached["ollama-cloud"]).toBeUndefined();
-    });
-
-    it("serves pricing from the disk cache without refetching when fresh", async () => {
-      mockFetchWith(okResponse(FIXTURE));
-      freshInstance();
-      await flushRefresh();
-
-      jest.resetModules();
-      const fetchSpy = jest.fn();
-      global.fetch = fetchSpy;
-      const pricing = freshInstance();
-      await flushRefresh();
-
-      expect(fetchSpy).not.toHaveBeenCalled();
       expect(
         pricing.getCostBreakdown("openai", "gpt-4o", {
           prompt_tokens: 1_000_000,
@@ -96,241 +45,30 @@ describe("ModelPricing", () => {
       ).toEqual({ inputCost: 2.5, outputCost: 0, totalCost: 2.5 });
     });
 
-    it("only bumps the cache expiry on a 304 response", async () => {
-      mockFetchWith(okResponse(FIXTURE, { etag: '"abc123"' }));
-      freshInstance();
-      await flushRefresh();
+    it("reuses the in-memory singleton after first load", () => {
+      const first = freshInstance();
+      const { ModelPricing } = require("../../../../utils/helpers/modelPricing");
 
-      // Age the cache past expiry so the next boot refreshes, then 304 it.
-      const cacheDir = path.join(tempDir, "models", "pricing");
-      fs.writeFileSync(path.join(cacheDir, ".cached_at"), "0");
-      jest.resetModules();
-      mockFetchWith({
-        status: 304,
-        headers: { get: () => null },
-        json: async () => {
-          throw new Error("304 has no body");
-        },
-      });
-      const pricing = freshInstance();
-      await flushRefresh();
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          headers: { "If-None-Match": '"abc123"' },
-        })
-      );
-      expect(pricing.isCacheStale).toBe(false);
-      expect(
-        pricing.getCostBreakdown("openai", "gpt-4o", {
-          prompt_tokens: 1_000_000,
-        })
-      ).toEqual({ inputCost: 2.5, outputCost: 0, totalCost: 2.5 });
+      expect(new ModelPricing()).toBe(first);
     });
 
-    it("keeps serving the stale disk cache when the remote fetch fails", async () => {
-      mockFetchWith(okResponse(FIXTURE));
-      freshInstance();
-      await flushRefresh();
-
-      const cacheDir = path.join(tempDir, "models", "pricing");
-      fs.writeFileSync(path.join(cacheDir, ".cached_at"), "0");
-      jest.resetModules();
-      global.fetch = jest.fn().mockRejectedValue(new Error("offline"));
+    it("slims absent and null cost entries while keeping zero costs", () => {
       const pricing = freshInstance();
-      await flushRefresh();
 
       expect(
-        pricing.getCostBreakdown("openai", "gpt-4o", {
-          prompt_tokens: 1_000_000,
+        pricing.getCostBreakdown("openai", "gpt-oss-free", {
+          prompt_tokens: 1000,
+          completion_tokens: 1000,
         })
-      ).toEqual({ inputCost: 2.5, outputCost: 0, totalCost: 2.5 });
-    });
-
-    it("walks the full retrieval lifecycle: cold fetch, warm cache, revalidation, upstream change", async () => {
-      // Boot 1 - cold: nothing on disk, fetch + cache the remote data.
-      mockFetchWith(okResponse(FIXTURE, { etag: '"v1"' }));
-      let pricing = freshInstance();
-      await flushRefresh();
-      expect(global.fetch).toHaveBeenCalled();
+      ).toEqual({ inputCost: 0, outputCost: 0, totalCost: 0 });
       expect(
-        pricing.getCostBreakdown("openai", "gpt-4o", {
-          prompt_tokens: 1_000_000,
+        pricing.getCostBreakdown("openai", "gpt-subscription-only", {
+          prompt_tokens: 1000,
         })
-      ).toEqual({ inputCost: 2.5, outputCost: 0, totalCost: 2.5 });
-
-      // Boot 2 - warm: cache is fresh, so no network call at all.
-      jest.resetModules();
-      global.fetch = jest.fn();
-      pricing = freshInstance();
-      await flushRefresh();
-      expect(global.fetch).not.toHaveBeenCalled();
+      ).toBeNull();
       expect(
-        pricing.getCostBreakdown("openai", "gpt-4o", {
-          prompt_tokens: 1_000_000,
-        })
-      ).toEqual({ inputCost: 2.5, outputCost: 0, totalCost: 2.5 });
-
-      // Boot 3 - expired: revalidates with the stored etag, gets a 304, and
-      // keeps serving the cached data.
-      const cacheDir = path.join(tempDir, "models", "pricing");
-      fs.writeFileSync(path.join(cacheDir, ".cached_at"), "0");
-      jest.resetModules();
-      mockFetchWith({
-        status: 304,
-        headers: { get: () => null },
-        json: async () => {
-          throw new Error("304 has no body");
-        },
-      });
-      pricing = freshInstance();
-      await flushRefresh();
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ headers: { "If-None-Match": '"v1"' } })
-      );
-      expect(pricing.isCacheStale).toBe(false);
-
-      // Boot 4 - expired again, but upstream pricing actually changed: the
-      // new rates and the new etag both land.
-      fs.writeFileSync(path.join(cacheDir, ".cached_at"), "0");
-      const updatedFixture = JSON.parse(JSON.stringify(FIXTURE));
-      updatedFixture.openai.models["gpt-4o"].cost = { input: 5, output: 20 };
-      jest.resetModules();
-      mockFetchWith(okResponse(updatedFixture, { etag: '"v2"' }));
-      pricing = freshInstance();
-      await flushRefresh();
-      expect(
-        pricing.getCostBreakdown("openai", "gpt-4o", {
-          prompt_tokens: 1_000_000,
-        })
-      ).toEqual({ inputCost: 5, outputCost: 0, totalCost: 5 });
-      expect(fs.readFileSync(path.join(cacheDir, ".etag"), "utf8")).toBe(
-        '"v2"'
-      );
-    });
-
-    it("does a full GET (no etag) when the disk cache is unusable", async () => {
-      // If the cache body is corrupt, sending If-None-Match would risk a 304
-      // against data we no longer have - the guard must skip the etag.
-      mockFetchWith(okResponse(FIXTURE, { etag: '"v1"' }));
-      freshInstance();
-      await flushRefresh();
-
-      const cacheDir = path.join(tempDir, "models", "pricing");
-      fs.writeFileSync(
-        path.join(cacheDir, "model-pricing.json"),
-        "not-json{{{"
-      );
-      jest.resetModules();
-      mockFetchWith(okResponse(FIXTURE, { etag: '"v1"' }));
-      const pricing = freshInstance();
-      await flushRefresh();
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ headers: {} })
-      );
-      expect(
-        pricing.getCostBreakdown("openai", "gpt-4o", {
-          prompt_tokens: 1_000_000,
-        })
-      ).toEqual({ inputCost: 2.5, outputCost: 0, totalCost: 2.5 });
-    });
-
-    it("treats a corrupted .cached_at timestamp as stale and refetches", async () => {
-      mockFetchWith(okResponse(FIXTURE));
-      freshInstance();
-      await flushRefresh();
-
-      const cacheDir = path.join(tempDir, "models", "pricing");
-      fs.writeFileSync(path.join(cacheDir, ".cached_at"), "garbage-timestamp");
-      jest.resetModules();
-      mockFetchWith(okResponse(FIXTURE));
-      const pricing = freshInstance();
-      await flushRefresh();
-
-      expect(global.fetch).toHaveBeenCalled();
-      expect(pricing.isCacheStale).toBe(false);
-    });
-
-    it("recovers from a corrupted disk cache file by refetching", async () => {
-      mockFetchWith(okResponse(FIXTURE));
-      freshInstance();
-      await flushRefresh();
-
-      // Corrupt the cache body while its timestamp is still fresh - the boot
-      // must notice the unusable cache and refetch anyway.
-      const cacheDir = path.join(tempDir, "models", "pricing");
-      fs.writeFileSync(
-        path.join(cacheDir, "model-pricing.json"),
-        "not-json{{{"
-      );
-      jest.resetModules();
-      mockFetchWith(okResponse(FIXTURE));
-      const pricing = freshInstance();
-      await flushRefresh();
-
-      expect(global.fetch).toHaveBeenCalled();
-      expect(
-        pricing.getCostBreakdown("openai", "gpt-4o", {
-          prompt_tokens: 1_000_000,
-        })
-      ).toEqual({ inputCost: 2.5, outputCost: 0, totalCost: 2.5 });
-    });
-
-    it("keeps the existing cache when the remote returns unusable data", async () => {
-      mockFetchWith(okResponse(FIXTURE));
-      freshInstance();
-      await flushRefresh();
-
-      const cacheDir = path.join(tempDir, "models", "pricing");
-      fs.writeFileSync(path.join(cacheDir, ".cached_at"), "0");
-      jest.resetModules();
-      mockFetchWith(okResponse({}));
-      const pricing = freshInstance();
-      await flushRefresh();
-
-      expect(
-        pricing.getCostBreakdown("openai", "gpt-4o", {
-          prompt_tokens: 1_000_000,
-        })
-      ).toEqual({ inputCost: 2.5, outputCost: 0, totalCost: 2.5 });
-    });
-
-    it.each([
-      ["a null body", okResponse(null)],
-      ["an array body", okResponse([1, 2, 3])],
-      ["a string body", okResponse("<html>rate limited</html>")],
-      [
-        "a 500 status",
-        { status: 500, headers: { get: () => null }, json: async () => ({}) },
-      ],
-    ])(
-      "returns null for cost when remote responds with %s and no disk cache exists",
-      async (_label, response) => {
-        mockFetchWith(response);
-        const pricing = freshInstance();
-        await flushRefresh();
-
-        expect(
-          pricing.getCostBreakdown("openai", "gpt-4o", {
-            prompt_tokens: 1_000_000,
-          })
-        ).toBeNull();
-      }
-    );
-
-    it("returns null for cost when offline with no disk cache", async () => {
-      global.fetch = jest.fn().mockRejectedValue(new Error("offline"));
-      const pricing = freshInstance();
-      await flushRefresh();
-
-      expect(
-        pricing.getCostBreakdown("openai", "gpt-4o", {
-          prompt_tokens: 1_000_000,
-          completion_tokens: 0,
+        pricing.getCostBreakdown("openrouter", "some-model", {
+          prompt_tokens: 1000,
         })
       ).toBeNull();
     });
@@ -339,10 +77,8 @@ describe("ModelPricing", () => {
   describe("getCostBreakdown", () => {
     let pricing;
 
-    beforeEach(async () => {
-      mockFetchWith(okResponse(FIXTURE));
+    beforeEach(() => {
       pricing = freshInstance();
-      await flushRefresh();
     });
 
     it("computes exact input/output/total costs", () => {
@@ -568,10 +304,8 @@ describe("ModelPricing", () => {
   });
 
   describe("addCostToMetrics", () => {
-    beforeEach(async () => {
-      mockFetchWith(okResponse(FIXTURE));
+    beforeEach(() => {
       freshInstance();
-      await flushRefresh();
     });
 
     it("decorates metrics when pricing is known", () => {
@@ -655,10 +389,8 @@ describe("ModelPricing", () => {
     let addChatCostToMetrics;
     const originalLLMProvider = process.env.LLM_PROVIDER;
 
-    beforeEach(async () => {
-      mockFetchWith(okResponse(FIXTURE));
+    beforeEach(() => {
       freshInstance();
-      await flushRefresh();
       ({
         addChatCostToMetrics,
       } = require("../../../../utils/helpers/modelPricing"));

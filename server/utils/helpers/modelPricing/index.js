@@ -3,7 +3,7 @@ const fs = require("fs");
 const { toNonNegativeNumber } = require("../numbers");
 
 /**
- * @typedef {Object} ModelCost - USD per 1,000,000 tokens (models.dev conventions)
+ * @typedef {Object} ModelCost - USD per 1,000,000 tokens
  * @property {number} input - cost per 1M prompt tokens
  * @property {number} output - cost per 1M completion tokens
  * @property {number} [cache_read] - cost per 1M cached prompt tokens read (falls back to `input`)
@@ -36,12 +36,12 @@ const FREE_PROVIDERS = [
  * Providers explicitly excluded from both FREE_PROVIDERS and PROVIDER_ID_MAP.
  * These degrade to null (cost fields omitted) — not forgotten, just unsupported:
  *  - generic-openai, litellm: proxies to arbitrary backends, no way to determine cost
- *  - apipie, cometapi, ppio, sambanova, giteeai, privatemode: cloud aggregators with costs but no models.dev listing
+ *  - apipie, cometapi, ppio, sambanova, giteeai, privatemode: cloud aggregators with costs but no static snapshot listing
  *  - nvidia-nim: self-hosted NIM, model set is user-defined and unaccounted for
  */
 
 /**
- * AnythingLLM provider slug -> models.dev provider id.
+ * AnythingLLM provider slug -> pricing snapshot provider id.
  * A missing/stale mapping degrades to "unknown", never a wrong price.
  */
 const PROVIDER_ID_MAP = {
@@ -66,35 +66,11 @@ const PROVIDER_ID_MAP = {
   cerebras: "cerebras",
 };
 
-const CACHE_EXPIRY_MS = 1000 * 60 * 60 * 24 * 3; // 3 days
-const REMOTE_URL = "https://models.dev/api.json";
-const FETCH_TIMEOUT_MS = 5000;
-
-function cacheDir() {
-  return path.resolve(
-    process.env.STORAGE_DIR
-      ? path.resolve(process.env.STORAGE_DIR, "models", "pricing")
-      : path.resolve(__dirname, "../../../storage/models/pricing")
-  );
-}
-
-const CACHE_FILES = {
-  get data() {
-    return path.resolve(cacheDir(), "model-pricing.json");
-  },
-  get expiry() {
-    return path.resolve(cacheDir(), ".cached_at");
-  },
-  get etag() {
-    return path.resolve(cacheDir(), ".etag");
-  },
-};
-
 /**
- * Extracts only cost data from the full models.dev API response.
+ * Extracts only cost data from the full pricing snapshot.
  * Models with absent or null cost are dropped so a lookup miss
  * cleanly signals "unknown pricing".
- * @param {Object} apiJson - full models.dev response: `{provider: {models: {model: {cost: ModelCost}}}}`
+ * @param {Object} apiJson - full pricing snapshot: `{provider: {models: {model: {cost: ModelCost}}}}`
  * @returns {Record<string, Record<string, ModelCost>>} flattened to `{provider: {model: ModelCost}}`
  */
 function slim(apiJson = {}) {
@@ -133,8 +109,6 @@ class ModelPricing {
 
   /** @type {Record<string, Record<string, ModelCost>>|null} */
   #pricing = null;
-  /** @type {boolean} - true when data came from disk cache (safe to send etag) */
-  #hasDiskCache = false;
   /** @type {Record<string, Record<string, string>>} - lazy case-insensitive index per provider */
   #lowercaseIndexes = {};
   /** @type {Record<string, Record<string, string>>} - lazy bedrock normalization index per provider */
@@ -144,92 +118,21 @@ class ModelPricing {
     if (ModelPricing.instance) return ModelPricing.instance;
     ModelPricing.instance = this;
 
-    const dir = cacheDir();
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    this.#loadSnapshot();
+  }
 
-    this.#loadFromDisk();
-    if (this.#isCacheStale() || !this.#pricing) {
-      this.#refresh()
-        .then(() => {
-          if (this.#pricing)
-            console.log(`⚡\x1b[32mPre-cached model pricing data\x1b[0m`);
+  #loadSnapshot() {
+    let data = {};
+    try {
+      data = JSON.parse(
+        fs.readFileSync(path.join(__dirname, "pricing.json"), {
+          encoding: "utf8",
         })
-        .catch((err) =>
-          log("Background pricing refresh failed:", err?.message)
-        );
-    } else {
-      console.log(`⚡\x1b[32mPre-cached model pricing data\x1b[0m`);
-    }
-  }
-
-  #isCacheStale() {
-    if (!fs.existsSync(CACHE_FILES.expiry)) return true;
-    const cachedAt = Number(fs.readFileSync(CACHE_FILES.expiry, "utf8"));
-    if (!Number.isFinite(cachedAt)) return true;
-    return Date.now() - cachedAt > CACHE_EXPIRY_MS;
-  }
-
-  #loadFromDisk() {
-    try {
-      if (!fs.existsSync(CACHE_FILES.data)) return;
-      this.#pricing = JSON.parse(
-        fs.readFileSync(CACHE_FILES.data, { encoding: "utf8" })
       );
-      this.#hasDiskCache = true;
     } catch (error) {
-      log("Failed to read pricing cache from disk", error?.message);
-      this.#pricing = null;
-      this.#hasDiskCache = false;
+      log("Failed to read static pricing snapshot", error?.message);
     }
-  }
-
-  async #refresh() {
-    try {
-      const headers = {};
-      if (this.#hasDiskCache && fs.existsSync(CACHE_FILES.etag)) {
-        const etag = fs.readFileSync(CACHE_FILES.etag, "utf8").trim();
-        if (etag) headers["If-None-Match"] = etag;
-      }
-
-      const response = await fetch(REMOTE_URL, {
-        headers,
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      });
-      if (response.status === 304) {
-        await fs.promises.writeFile(CACHE_FILES.expiry, Date.now().toString());
-        log("Remote pricing unchanged (304) - cache expiry bumped.");
-        return;
-      }
-
-      if (response.status !== 200)
-        throw new Error(`HTTP ${response.status} from ${REMOTE_URL}`);
-
-      const data = await response.json();
-      const pricing = slim(data);
-      if (!Object.keys(pricing).length)
-        throw new Error("Remote pricing data contained no usable cost data");
-
-      this.#pricing = pricing;
-      this.#hasDiskCache = true;
-      this.#clearIndexes();
-
-      const etag = response.headers.get("etag");
-      await Promise.all([
-        fs.promises.writeFile(CACHE_FILES.data, JSON.stringify(pricing)),
-        fs.promises.writeFile(CACHE_FILES.expiry, Date.now().toString()),
-        etag
-          ? fs.promises.writeFile(CACHE_FILES.etag, etag)
-          : Promise.resolve(),
-      ]);
-      log("Remote pricing data synced and cached.");
-    } catch (error) {
-      log("Error syncing remote pricing data", error?.message);
-    }
-  }
-
-  #clearIndexes() {
-    this.#lowercaseIndexes = {};
-    this.#normalizedIndexes = {};
+    this.#pricing = slim(data || {});
   }
 
   #findModelCost(providerId, providerSlug, model) {
@@ -318,10 +221,6 @@ class ModelPricing {
     );
     const totalCost = parseFloat((inputCost + outputCost).toFixed(10));
     return { inputCost, outputCost, totalCost };
-  }
-
-  get isCacheStale() {
-    return this.#isCacheStale();
   }
 }
 
