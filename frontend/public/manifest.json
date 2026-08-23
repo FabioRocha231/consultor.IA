@@ -1,12 +1,12 @@
 {
-  "name": "AnythingLLM",
-  "short_name": "AnythingLLM",
+  "name": "consultor.IA",
+  "short_name": "consultor.IA",
   "display": "standalone",
   "orientation": "portrait",
   "start_url": "/",
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "/consultor-ia-icon.svg",
       "sizes": "any"
     }
   ]

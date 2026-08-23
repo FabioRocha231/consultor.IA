@@ -1,6 +1,6 @@
 import { QRCodeSVG } from "qrcode.react";
 import { TelegramLogo } from "@phosphor-icons/react";
-import Logo from "@/media/logo/anything-llm-infinity.png";
+import ConsultorIAIcon from "@/media/logo/consultor-ia-icon.svg";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
@@ -39,7 +39,7 @@ export default function CreateBotSection() {
               className="text-white light:text-slate-900 light:[&_image]:invert"
               level="L"
               imageSettings={{
-                src: Logo,
+                src: ConsultorIAIcon,
                 x: qrSize / 2 - logoSize.width / 2,
                 y: qrSize / 2 - logoSize.height / 2,
                 height: logoSize.height,

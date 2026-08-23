@@ -149,7 +149,7 @@ function DemoVoiceSample({ voiceId }) {
         setLoading(true);
         const client = new PiperTTSClient({ voiceId });
         const blobUrl = await client.getAudioBlobForText(
-          "Hello, welcome to AnythingLLM!"
+          "Hello, welcome to consultor.IA!"
         );
         setAudioSrc(blobUrl);
         setLoading(false);
