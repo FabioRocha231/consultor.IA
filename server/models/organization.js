@@ -35,7 +35,25 @@ const Organization = {
     "operacoes",
   ],
   VALID_STATUSES: ["active", "suspended", "archived"],
-  writable: ["name", "segment", "status", "n8nWebhookUrl", "n8nApiKey"],
+  publicFields: [
+    "id",
+    "name",
+    "slug",
+    "segment",
+    "status",
+    "n8nWebhookUrl",
+    "createdAt",
+    "updatedAt",
+    "publishedAt",
+  ],
+  writable: [
+    "name",
+    "segment",
+    "status",
+    "wizardState",
+    "n8nWebhookUrl",
+    "n8nApiKey",
+  ],
 
   validations: {
     name: (value) => {
@@ -61,6 +79,17 @@ const Organization = {
           )}`
         );
       return String(value);
+    },
+    wizardState: (value) => {
+      if (value === null || value === undefined) return null;
+      if (typeof value !== "object" || Array.isArray(value))
+        throw new Error("wizardState must be an object");
+      try {
+        JSON.stringify(value);
+      } catch {
+        throw new Error("wizardState must be JSON serializable");
+      }
+      return value;
     },
     n8nWebhookUrl: (value) => {
       if (value === null || value === undefined || value === "") return null;

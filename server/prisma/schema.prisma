@@ -56,6 +56,8 @@ model organization {
   slug      String   @unique
   segment   String?
   status    String   @default("active")
+  wizardState Json?
+  publishedAt DateTime?
   n8nWebhookUrl String?
   n8nApiKey     String? // encrypted at rest via EncryptionManager
   createdAt DateTime @default(now())
