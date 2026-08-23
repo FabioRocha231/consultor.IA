@@ -283,6 +283,20 @@ function recordEmbeddingJob({
   });
 }
 
+function recordFeedback({
+  score = null,
+  category = null,
+  commentLength = null,
+} = {}) {
+  if (isDisabled()) return;
+  if (score === null || score === undefined) return;
+  setActiveSpanAttributes({
+    "feedback.score": score ? "positive" : "negative",
+    "feedback.category": category || undefined,
+    "feedback.comment_length": commentLength ?? undefined,
+  });
+}
+
 module.exports = {
   getAITracer,
   getAIMeter,
@@ -293,4 +307,5 @@ module.exports = {
   recordAgentRun,
   recordDocumentIngestion,
   recordEmbeddingJob,
+  recordFeedback,
 };

@@ -197,7 +197,15 @@ function handleDefaultStreamResponseV2(response, stream, responseProps) {
 function convertToChatHistory(history = []) {
   const formattedHistory = [];
   for (const record of history) {
-    const { prompt, response, createdAt, feedbackScore = null, id } = record;
+    const {
+      prompt,
+      response,
+      createdAt,
+      feedbackScore = null,
+      feedbackCategory = null,
+      feedbackComment = null,
+      id,
+    } = record;
     const data = JSON.parse(response);
 
     // In the event that a bad response was stored - we should skip its entire record
@@ -230,6 +238,8 @@ function convertToChatHistory(history = []) {
         chatId: id,
         sentAt: moment(createdAt).unix(),
         feedbackScore,
+        feedbackCategory,
+        feedbackComment,
         metrics: data?.metrics || {},
         ...(data?.outputs?.length > 0 ? { outputs: data.outputs } : {}),
         ...(data?.clarifyingQuestions?.length > 0

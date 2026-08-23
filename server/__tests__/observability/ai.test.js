@@ -16,6 +16,7 @@ const {
   recordLlmCall,
   recordRagCall,
   recordToolCall,
+  recordFeedback,
   withSpan,
 } = require("../../utils/observability/ai");
 
@@ -187,6 +188,23 @@ describe("ai observability helpers", () => {
         }),
       ])
     );
+  });
+
+  test("recordFeedback adds feedback attributes to an active span", async () => {
+    await withSpan("chat.request", () =>
+      recordFeedback({
+        score: false,
+        category: "informacao_incorreta",
+        commentLength: 11,
+      })
+    );
+
+    const [span] = spanExporter.getFinishedSpans();
+    expect(span.attributes).toMatchObject({
+      "feedback.score": "negative",
+      "feedback.category": "informacao_incorreta",
+      "feedback.comment_length": 11,
+    });
   });
 
   test("nested spans keep chat.request -> rag -> llm.generate hierarchy and TTFT event", async () => {
