@@ -57,7 +57,7 @@ const SlashCommandPresets = {
           // This field (uid) is either the user_id or 0 (for non-multi-user mode).
           // the UID field enforces the @@unique(userId, command) constraint since
           // the real relational field (userId) cannot be non-null so this 'dummy' field gives us something
-          // to constrain against within the context of prisma and sqlite that works.
+          // to constrain against within the context of Prisma that works.
           uid: userId ? Number(userId) : 0,
           userId: userId ? Number(userId) : null,
         },

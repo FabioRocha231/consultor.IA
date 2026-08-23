@@ -20,7 +20,7 @@ const ScheduledJobRun = {
    * if a `queued` or `running` row already exists, this returns null and the
    * caller should drop the request. The check + insert run inside an
    * interactive transaction so two concurrent callers cannot both pass;
-   * SQLite serializes writes.
+   * the transaction serializes writes.
    *
    * The row is created in `queued` status; the worker transitions it to
    * `running` via markRunning() once it actually begins executing.

@@ -2,17 +2,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Uncomment the following lines and comment out the SQLite datasource block above to use PostgreSQL
-// Make sure to set the correct DATABASE_URL in your .env file
-// After swapping run `yarn prisma:setup` from the root directory to migrate the database
-//
-// datasource db {
-//   provider = "postgresql"
-//   url      = env("DATABASE_URL")
-// }
 datasource db {
-  provider = "sqlite"
-  url      = "file:../storage/anythingllm.db"
+  provider = "postgresql"
+  url      = env("DB_URL")
 }
 
 model api_keys {
@@ -56,6 +48,18 @@ model system_settings {
   value         String?
   createdAt     DateTime @default(now())
   lastUpdatedAt DateTime @default(now())
+}
+
+model organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  segment   String?
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspaces workspaces[]
 }
 
 model users {
@@ -139,7 +143,9 @@ model workspaces {
   agentModel                   String?
   queryRefusalResponse         String?
   vectorSearchMode             String?                        @default("default")
-  router_id                    Int? // No relation to prevent whole table migration (SQLite limitation)
+  router_id                    Int? // kept scalar for compatibility with existing tables
+  organizationId               String?
+  organization                 organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   workspace_users              workspace_users[]
   documents                    workspace_documents[]
   workspace_suggested_messages workspace_suggested_messages[]
