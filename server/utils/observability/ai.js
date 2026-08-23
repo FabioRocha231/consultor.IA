@@ -141,6 +141,9 @@ function getInstruments() {
     ),
     embeddingJobs: meter.createCounter("embedding_jobs_total"),
     embeddingJobsFailed: meter.createCounter("embedding_jobs_failed"),
+    evalRuns: meter.createCounter("eval_runs_total"),
+    evalQuestions: meter.createCounter("eval_questions_total"),
+    evalLatency: meter.createHistogram("eval_latency_ms"),
   };
 }
 
@@ -401,6 +404,28 @@ function recordFeedback({
   });
 }
 
+function recordEvalRun({ organization = null, status = "unknown" } = {}) {
+  if (isDisabled()) return;
+  const labels = { organization: String(organization || "unknown") };
+  getInstruments().evalRuns.add(1, { ...labels, status: String(status) });
+}
+
+function recordEvalQuestion({ organization = null } = {}) {
+  if (isDisabled()) return;
+  getInstruments().evalQuestions.add(1, {
+    organization: String(organization || "unknown"),
+  });
+}
+
+function recordEvalLatency({ organization = null, latencyMs = null } = {}) {
+  if (isDisabled()) return;
+  const latency = finiteNumber(latencyMs);
+  if (latency === null) return;
+  getInstruments().evalLatency.record(latency, {
+    organization: String(organization || "unknown"),
+  });
+}
+
 module.exports = {
   getAITracer,
   getAIMeter,
@@ -413,4 +438,7 @@ module.exports = {
   recordDocumentIngestion,
   recordEmbeddingJob,
   recordFeedback,
+  recordEvalRun,
+  recordEvalQuestion,
+  recordEvalLatency,
 };

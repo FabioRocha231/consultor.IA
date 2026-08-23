@@ -26,6 +26,9 @@ export default {
   dashboard: () => {
     return "/dashboard";
   },
+  eval: () => {
+    return "/eval";
+  },
   login: (noTry = false) => {
     return `/login${noTry ? "?nt=1" : ""}`;
   },

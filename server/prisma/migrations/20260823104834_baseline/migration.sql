@@ -699,3 +699,61 @@ ALTER TABLE "memories" ADD CONSTRAINT "memories_workspace_id_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "model_router_rules" ADD CONSTRAINT "model_router_rules_router_id_fkey" FOREIGN KEY ("router_id") REFERENCES "model_routers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- CreateTable
+CREATE TABLE IF NOT EXISTS "eval_dataset" (
+    "id" TEXT NOT NULL,
+    "organizationId" TEXT,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "eval_dataset_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE IF NOT EXISTS "eval_question" (
+    "id" TEXT NOT NULL,
+    "datasetId" TEXT NOT NULL,
+    "question" TEXT NOT NULL,
+    "expectedAnswer" TEXT,
+    "expectedSource" TEXT,
+    "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "eval_question_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE IF NOT EXISTS "eval_run" (
+    "id" TEXT NOT NULL,
+    "datasetId" TEXT NOT NULL,
+    "organizationId" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "configSnapshot" JSONB NOT NULL,
+    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+    "totalQuestions" INTEGER NOT NULL DEFAULT 0,
+    "metrics" JSONB,
+
+    CONSTRAINT "eval_run_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE IF NOT EXISTS "eval_result" (
+    "id" TEXT NOT NULL,
+    "runId" TEXT NOT NULL,
+    "questionId" TEXT NOT NULL,
+    "answer" TEXT,
+    "retrievedSources" JSONB,
+    "retrievalAccuracy" BOOLEAN,
+    "answerCorrectness" BOOLEAN,
+    "citationCorrectness" BOOLEAN,
+    "latencyMs" INTEGER,
+    "costUsd" DOUBLE PRECISION,
+    "error" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "eval_result_pkey" PRIMARY KEY ("id")
+);

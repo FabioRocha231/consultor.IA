@@ -1,5 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ChartLineUp, List, Plus } from "@phosphor-icons/react";
+import {
+  ChartLineUp,
+  List,
+  MagnifyingGlass,
+  Plus,
+} from "@phosphor-icons/react";
 import NewWorkspaceModal, {
   useNewWorkspaceModal,
 } from "../Modals/NewWorkspace";
@@ -64,6 +69,7 @@ export default function Sidebar() {
                   <div className="flex flex-col gap-y-[14px]">
                     <SearchBox user={user} showNewWsModal={showNewWsModal} />
                     <DashboardLink user={user} />
+                    <EvalLink user={user} />
                     <ActiveWorkspaces />
                   </div>
                 </div>
@@ -175,6 +181,7 @@ export function SidebarMobileHeader() {
                     showNewWsModal={showNewWsModal}
                   />
                   <DashboardLink user={user} />
+                  <EvalLink user={user} />
                   <ActiveWorkspaces />
                 </div>
               </div>
@@ -220,6 +227,21 @@ function DashboardLink({ user }) {
     >
       <ChartLineUp size={16} weight="bold" />
       {t("dashboard.title")}
+    </Link>
+  );
+}
+
+function EvalLink({ user }) {
+  const { t } = useTranslation();
+  if (!!user && user?.role === "default") return null;
+
+  return (
+    <Link
+      to={paths.eval()}
+      className="flex items-center gap-x-2 h-[32px] px-3 rounded-lg bg-theme-sidebar-item-default text-theme-text-primary text-sm font-medium hover:bg-theme-sidebar-subitem-hover transition-all duration-200"
+    >
+      <MagnifyingGlass size={16} weight="bold" />
+      {t("eval.title")}
     </Link>
   );
 }

@@ -340,6 +340,13 @@ const router = createBrowserRouter([
           return { element: <ManagerRoute Component={Dashboard} /> };
         },
       },
+      {
+        path: "/eval",
+        lazy: async () => {
+          const { default: Eval } = await import("@/pages/Eval");
+          return { element: <ManagerRoute Component={Eval} /> };
+        },
+      },
       // Onboarding Flow
       {
         path: "/onboarding",
