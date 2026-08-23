@@ -65,6 +65,64 @@ model organization {
   updatedAt DateTime @updatedAt
 
   workspaces workspaces[]
+  evalDataset eval_dataset[]
+  eval_run eval_run[]
+}
+
+model eval_dataset {
+  id             String          @id @default(uuid())
+  organizationId String?
+  organization   organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  name           String
+  description    String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  questions      eval_question[]
+  runs           eval_run[]
+}
+
+model eval_question {
+  id             String        @id @default(uuid())
+  datasetId      String
+  dataset        eval_dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  question       String
+  expectedAnswer String?
+  expectedSource String? // filename esperado (ex: "cardapio.pdf")
+  tags           String[]      @default([])
+  createdAt      DateTime      @default(now())
+  results        eval_result[]
+}
+
+model eval_run {
+  id             String        @id @default(uuid())
+  datasetId      String
+  dataset        eval_dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  organizationId String?
+  organization   organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  status         String        @default("pending") // "pending" | "running" | "completed" | "failed"
+  configSnapshot Json
+  startedAt      DateTime      @default(now())
+  completedAt    DateTime?
+  totalQuestions Int           @default(0)
+  metrics        Json?
+  results        eval_result[]
+}
+
+model eval_result {
+  id                  String        @id @default(uuid())
+  runId               String
+  run                 eval_run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  questionId          String
+  question            eval_question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answer              String?
+  retrievedSources    Json? // [{ filename, score }]
+  retrievalAccuracy   Boolean?
+  answerCorrectness   Boolean?
+  citationCorrectness Boolean?
+  latencyMs           Int?
+  costUsd             Float?
+  error               String?
+  createdAt           DateTime      @default(now())
 }
 
 model users {
