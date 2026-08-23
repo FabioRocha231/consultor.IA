@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { List, Plus } from "@phosphor-icons/react";
+import { ChartLineUp, List, Plus } from "@phosphor-icons/react";
 import NewWorkspaceModal, {
   useNewWorkspaceModal,
 } from "../Modals/NewWorkspace";
@@ -63,6 +63,7 @@ export default function Sidebar() {
                 <div className="relative h-[calc(100%-60px)] flex flex-col w-full justify-between pt-[10px] overflow-y-scroll no-scroll">
                   <div className="flex flex-col gap-y-[14px]">
                     <SearchBox user={user} showNewWsModal={showNewWsModal} />
+                    <DashboardLink user={user} />
                     <ActiveWorkspaces />
                   </div>
                 </div>
@@ -173,6 +174,7 @@ export function SidebarMobileHeader() {
                     user={user}
                     showNewWsModal={showNewWsModal}
                   />
+                  <DashboardLink user={user} />
                   <ActiveWorkspaces />
                 </div>
               </div>
@@ -204,6 +206,21 @@ function NewWorkspaceButton({ user, showNewWsModal }) {
         </p>
       </button>
     </div>
+  );
+}
+
+function DashboardLink({ user }) {
+  const { t } = useTranslation();
+  if (!!user && user?.role === "default") return null;
+
+  return (
+    <Link
+      to={paths.dashboard()}
+      className="flex items-center gap-x-2 h-[32px] px-3 rounded-lg bg-theme-sidebar-item-default text-theme-text-primary text-sm font-medium hover:bg-theme-sidebar-subitem-hover transition-all duration-200"
+    >
+      <ChartLineUp size={16} weight="bold" />
+      {t("dashboard.title")}
+    </Link>
   );
 }
 

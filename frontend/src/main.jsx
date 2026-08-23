@@ -333,6 +333,13 @@ const router = createBrowserRouter([
           return { element: <ManagerRoute Component={AdminWorkspaces} /> };
         },
       },
+      {
+        path: "/dashboard",
+        lazy: async () => {
+          const { default: Dashboard } = await import("@/pages/Dashboard");
+          return { element: <ManagerRoute Component={Dashboard} /> };
+        },
+      },
       // Onboarding Flow
       {
         path: "/onboarding",
