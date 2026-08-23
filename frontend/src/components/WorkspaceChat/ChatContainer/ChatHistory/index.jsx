@@ -315,6 +315,8 @@ function buildMessages({
           workspace={workspace}
           sources={props.sources}
           feedbackScore={props.feedbackScore}
+          feedbackCategory={props.feedbackCategory}
+          feedbackComment={props.feedbackComment}
           chatId={props.chatId}
           error={props.error}
           attachments={props.attachments}

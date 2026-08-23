@@ -29,6 +29,7 @@ const SIZE_CLASSES = {
  * @param {"default"|"bare"} [props.variant="default"] - `default` renders the uniform card; `bare` centers raw children
  * @param {string} [props.className] - Extra classes appended to the backdrop container (e.g. a higher `z-` to clear a page's fixed top bar)
  * @param {boolean} [props.closeOnEsc=true] - Whether pressing Escape calls `onClose`. Some modals require a forced choice and should opt out.
+ * @param {boolean} [props.closeOnBackdrop=false] - Whether clicking outside the card calls `onClose`.
  * @param {boolean} [props.noPortal=false] - Render inline instead of portaling to #root. Used for sub-DOM modals that must render as a child element.
  *   Note: this can impact the backdrop presentation due to conflicting DOM positions, so double check it renders as desired.
  */
@@ -40,6 +41,7 @@ export default function Modal({
   variant = "default",
   className = "",
   closeOnEsc = true,
+  closeOnBackdrop = false,
   noPortal = false,
 }) {
   useModalEscape(isOpen && closeOnEsc, onClose);
@@ -50,15 +52,22 @@ export default function Modal({
     `bg-black/60 backdrop-blur-sm fixed top-0 left-0 outline-none w-screen h-screen flex items-center justify-center z-99 ${className}`.trim();
 
   if (variant === "bare") {
-    const bare = <div className={backdrop}>{children}</div>;
+    const bare = (
+      <div className={backdrop} onClick={closeOnBackdrop ? onClose : undefined}>
+        {children}
+      </div>
+    );
     if (noPortal) return bare;
     return createPortal(bare, document.getElementById("root"));
   }
 
   const content = (
-    <div className={backdrop}>
+    <div className={backdrop} onClick={closeOnBackdrop ? onClose : undefined}>
       <div
         className={`relative w-full ${SIZE_CLASSES[size] || SIZE_CLASSES.md} mx-4 flex flex-col gap-y-5 p-6 rounded-lg shadow-xs max-h-[90vh] overflow-y-auto bg-zinc-900 light:bg-white border border-zinc-800 light:border-slate-300`}
+        onClick={
+          closeOnBackdrop ? (event) => event.stopPropagation() : undefined
+        }
       >
         {children}
       </div>

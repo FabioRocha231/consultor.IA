@@ -1,15 +1,40 @@
 import React, { memo, useState } from "react";
 import useCopyText from "@/hooks/useCopyText";
-import { Check, ThumbsUp, ArrowsClockwise, Copy } from "@phosphor-icons/react";
+import {
+  Check,
+  ThumbsUp,
+  ThumbsDown,
+  ArrowsClockwise,
+  Copy,
+  X,
+} from "@phosphor-icons/react";
 import Workspace from "@/models/workspace";
 import { EditMessageAction } from "./EditMessage";
 import RenderMetrics from "./RenderMetrics";
 import ActionMenu from "./ActionMenu";
 import { useTranslation } from "react-i18next";
+import Modal, {
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalPrimaryButton,
+  ModalSecondaryButton,
+  ModalTextarea,
+} from "@/components/lib/Modal";
+
+const FEEDBACK_CATEGORIES = [
+  "informacao_incorreta",
+  "informacao_desatualizada",
+  "nao_encontrou_resposta",
+  "resposta_confusa",
+  "outro",
+];
 
 const Actions = ({
   message,
   feedbackScore,
+  feedbackCategory = null,
+  feedbackComment = null,
   chatId,
   slug,
   isLastMessage,
@@ -21,11 +46,49 @@ const Actions = ({
 }) => {
   const { t } = useTranslation();
   const [selectedFeedback, setSelectedFeedback] = useState(feedbackScore);
-  const handleFeedback = async (newFeedback) => {
-    const updatedFeedback =
-      selectedFeedback === newFeedback ? null : newFeedback;
+  const [submittedCategory, setSubmittedCategory] = useState(feedbackCategory);
+  const [submittedComment, setSubmittedComment] = useState(feedbackComment);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [draftCategory, setDraftCategory] = useState(null);
+  const [draftComment, setDraftComment] = useState("");
+
+  const handlePositiveFeedback = async () => {
+    const updatedFeedback = selectedFeedback === true ? null : true;
     await Workspace.updateChatFeedback(chatId, slug, updatedFeedback);
     setSelectedFeedback(updatedFeedback);
+    if (updatedFeedback !== true) {
+      setSubmittedCategory(null);
+      setSubmittedComment(null);
+    }
+  };
+
+  const openNegativeFeedback = () => {
+    setDraftCategory(submittedCategory || null);
+    setDraftComment(submittedComment || "");
+    setModalOpen(true);
+  };
+
+  const submitNegativeFeedback = async () => {
+    if (!draftCategory) return;
+    const comment = draftComment.trim() || null;
+    await Workspace.updateChatFeedback(
+      chatId,
+      slug,
+      false,
+      draftCategory,
+      comment
+    );
+    setSelectedFeedback(false);
+    setSubmittedCategory(draftCategory);
+    setSubmittedComment(comment);
+    setModalOpen(false);
+  };
+
+  const clearFeedback = async () => {
+    await Workspace.updateChatFeedback(chatId, slug, null);
+    setSelectedFeedback(null);
+    setSubmittedCategory(null);
+    setSubmittedComment(null);
   };
 
   return (
@@ -52,13 +115,43 @@ const Actions = ({
             />
           )}
           {chatId && role !== "user" && !isEditing && (
-            <FeedbackButton
-              isSelected={selectedFeedback === true}
-              handleFeedback={() => handleFeedback(true)}
-              tooltipId="feedback-button"
-              tooltipContent={t("chat_window.good_response")}
-              IconComponent={ThumbsUp}
-            />
+            <div className="flex items-start gap-x-1">
+              <FeedbackButton
+                isSelected={selectedFeedback === true}
+                handleFeedback={handlePositiveFeedback}
+                tooltipId="feedback-button"
+                tooltipContent={
+                  selectedFeedback === true
+                    ? t("feedback.thanks")
+                    : t("chat_window.good_response")
+                }
+                IconComponent={ThumbsUp}
+              />
+              <FeedbackButton
+                isSelected={selectedFeedback === false}
+                handleFeedback={openNegativeFeedback}
+                tooltipId="feedback-button-negative"
+                tooltipContent={t("feedback.title")}
+                IconComponent={ThumbsDown}
+              />
+              {selectedFeedback === false && submittedCategory && (
+                <div className="mt-3 flex items-center gap-x-1">
+                  <button
+                    onClick={openNegativeFeedback}
+                    className="text-xs text-zinc-300 light:text-slate-500 hover:text-white light:hover:text-slate-900"
+                  >
+                    {t(`feedback.categories.${submittedCategory}`)}
+                  </button>
+                  <button
+                    onClick={clearFeedback}
+                    aria-label={t("feedback.clear")}
+                    className="text-zinc-300 light:text-slate-500 hover:text-white light:hover:text-slate-900"
+                  >
+                    <X size={12} weight="bold" />
+                  </button>
+                </div>
+              )}
+            </div>
           )}
           <ActionMenu
             chatId={chatId}
@@ -69,6 +162,60 @@ const Actions = ({
         </div>
       </div>
       <RenderMetrics metrics={metrics} />
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        size="sm"
+        closeOnBackdrop
+      >
+        <ModalHeader
+          title={t("feedback.title")}
+          onClose={() => setModalOpen(false)}
+        />
+        <ModalBody>
+          <div className="flex flex-col gap-y-2">
+            {FEEDBACK_CATEGORIES.map((category) => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setDraftCategory(category)}
+                aria-pressed={draftCategory === category}
+                className={`w-full rounded-lg border px-3 py-2 text-sm text-left transition-colors ${
+                  draftCategory === category
+                    ? "border-sky-500 bg-sky-500/10 text-sky-300 light:text-sky-700"
+                    : "border-zinc-700 bg-zinc-800 text-zinc-200 hover:border-zinc-500 light:border-slate-300 light:bg-white light:text-slate-800"
+                }`}
+              >
+                {t(`feedback.categories.${category}`)}
+              </button>
+            ))}
+          </div>
+          <ModalTextarea
+            label={t("feedback.comment.label")}
+            placeholder={t("feedback.comment.placeholder")}
+            value={draftComment}
+            onChange={(event) => setDraftComment(event.target.value)}
+            maxLength={500}
+            rows={3}
+            optional
+          />
+        </ModalBody>
+        <ModalFooter>
+          <ModalSecondaryButton
+            type="button"
+            onClick={() => setModalOpen(false)}
+          >
+            {t("feedback.cancel")}
+          </ModalSecondaryButton>
+          <ModalPrimaryButton
+            type="button"
+            onClick={submitNegativeFeedback}
+            disabled={!draftCategory}
+          >
+            {t("feedback.submit")}
+          </ModalPrimaryButton>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 };
@@ -77,13 +224,14 @@ function FeedbackButton({
   isSelected,
   handleFeedback,
   tooltipContent,
+  tooltipId,
   IconComponent,
 }) {
   return (
     <div className="mt-3 relative">
       <button
         onClick={handleFeedback}
-        data-tooltip-id="feedback-button"
+        data-tooltip-id={tooltipId}
         data-tooltip-content={tooltipContent}
         className="text-zinc-300 light:text-slate-500"
         aria-label={tooltipContent}

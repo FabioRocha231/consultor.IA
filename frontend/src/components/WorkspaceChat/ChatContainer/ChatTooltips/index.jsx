@@ -43,6 +43,12 @@ export function ChatTooltips() {
         className="tooltip !text-xs"
       />
       <Tooltip
+        id="feedback-button-negative"
+        place="bottom"
+        delayShow={300}
+        className="tooltip !text-xs"
+      />
+      <Tooltip
         id="action-menu"
         place="top"
         delayShow={300}
