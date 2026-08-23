@@ -44,7 +44,8 @@ const TRANSLATIONS = {
       },
       4: {
         title: "Adicionar conhecimento",
-        description: "Envie documentos, links ou textos que a IA deve conhecer.",
+        description:
+          "Envie documentos, links ou textos que a IA deve conhecer.",
       },
       5: {
         title: "Definir comportamento",

@@ -49,7 +49,8 @@ const TRANSLATIONS = {
       skip: "Přeskočit průzkum",
       thankYou: "Děkujeme za vaši zpětnou vazbu!",
     },
-    welcome: "Let's configure your AI for your business. No technical setup: just questions about your company.",
+    welcome:
+      "Let's configure your AI for your business. No technical setup: just questions about your company.",
     continue: "Continue",
     back: "Back",
     publish: "Publish",
@@ -73,57 +74,58 @@ const TRANSLATIONS = {
     testMessage: "Write a message the way your customer would",
     testMessageRequired: "Write a message to test.",
     publishTitle: "Ready to publish?",
-    publishDescription: "Your company goes live and the AI starts being used every day.",
+    publishDescription:
+      "Your company goes live and the AI starts being used every day.",
     publishIncomplete: "Complete steps 1 through 4 before publishing.",
     step: {
       "1": {
-        "title": "Set Up Company",
-        "description": "Start with your company's name and identity."
+        title: "Set Up Company",
+        description: "Start with your company's name and identity.",
       },
       "2": {
-        "title": "What is your segment?",
-        "description": "Choose your company's main area."
+        title: "What is your segment?",
+        description: "Choose your company's main area.",
       },
       "3": {
-        "title": "What is the AI goal?",
-        "description": "What should the AI help achieve?"
+        title: "What is the AI goal?",
+        description: "What should the AI help achieve?",
       },
       "4": {
-        "title": "Add Knowledge",
-        "description": "Add documents, links, or text the AI should know."
+        title: "Add Knowledge",
+        description: "Add documents, links, or text the AI should know.",
       },
       "5": {
-        "title": "Set Behavior",
-        "description": "How should the AI communicate with your customers?"
+        title: "Set Behavior",
+        description: "How should the AI communicate with your customers?",
       },
       "6": {
-        "title": "Test",
-        "description": "Try a response before publishing."
+        title: "Test",
+        description: "Try a response before publishing.",
       },
       "7": {
-        "title": "Publish",
-        "description": "Confirm and take your company live."
-      }
+        title: "Publish",
+        description: "Confirm and take your company live.",
+      },
     },
     segments: {
-      "atendimento": "Customer service",
-      "vendas": "Sales",
-      "suporte": "Support",
-      "conhecimento_interno": "Internal knowledge",
-      "operacoes": "Operations"
+      atendimento: "Customer service",
+      vendas: "Sales",
+      suporte: "Support",
+      conhecimento_interno: "Internal knowledge",
+      operacoes: "Operations",
     },
     objectives: {
-      "atender_cliente": "Serve customers",
-      "capturar_lead": "Capture leads",
-      "suporte_interno": "Internal support",
-      "base_conhecimento": "Knowledge base",
-      "automacao": "Automation"
+      atender_cliente: "Serve customers",
+      capturar_lead: "Capture leads",
+      suporte_interno: "Internal support",
+      base_conhecimento: "Knowledge base",
+      automacao: "Automation",
     },
     tones: {
-      "profissional": "Professional",
-      "amigavel": "Friendly",
-      "comercial": "Commercial",
-      "objetivo": "Objective"
+      profissional: "Professional",
+      amigavel: "Friendly",
+      comercial: "Commercial",
+      objetivo: "Objective",
     },
   },
   common: {
