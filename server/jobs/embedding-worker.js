@@ -24,6 +24,7 @@ const { v4: uuidv4 } = require("uuid");
 const prisma = require("../utils/prisma");
 const { getVectorDbClass } = require("../utils/helpers");
 const { fileData } = require("../utils/files");
+const { recordEmbeddingJob } = require("../utils/observability/ai");
 const queue = [];
 const cancelled = new Set();
 let processing = false;
@@ -74,6 +75,8 @@ async function processQueue() {
 
     const data = await fileData(filePath);
     if (!data) {
+      // PR 09: record failed embedding job without exposing file contents.
+      recordEmbeddingJob({ result: "error", error: new Error("No file data") });
       emit({
         type: "doc_failed",
         ...docProgress,
@@ -109,6 +112,10 @@ async function processQueue() {
     );
 
     if (!vectorized) {
+      recordEmbeddingJob({
+        result: "error",
+        error: new Error(error || "Vectorization failed"),
+      });
       console.error("Failed to vectorize", metadata?.title || newDoc.filename);
       failedToEmbed.push(metadata?.title || newDoc.filename);
       emit({
@@ -121,12 +128,14 @@ async function processQueue() {
 
     try {
       await prisma.workspace_documents.create({ data: newDoc });
+      recordEmbeddingJob({ result: "success" });
       embedded.push(filePath);
       emit({
         type: "doc_complete",
         ...docProgress,
       });
     } catch (err) {
+      recordEmbeddingJob({ result: "error", error: err });
       console.error(err.message);
       emit({
         type: "doc_failed",

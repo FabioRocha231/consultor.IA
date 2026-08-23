@@ -4,6 +4,7 @@ const { APIError } = require("./error.js");
 const Providers = require("./providers/index.js");
 const { v4 } = require("uuid");
 const { ToolReranker } = require("./utils/toolReranker.js");
+const { recordToolCall, withSpan } = require("../../observability/ai");
 
 /**
  * AIbitat is a class that manages the conversation between agents.
@@ -884,7 +885,18 @@ ${this.getHistory({ to: route.to })
    * @param route.to The node that sent the chat.
    * @param route.from The node that will reply to the chat.
    */
+  // PR 09: one agent.reasoning span per LLM reply iteration.
   async reply(route) {
+    const iteration =
+      this.getHistory({ from: route.from, to: route.to }).length + 1;
+    return withSpan("agent.reasoning", () => this.#replyInner(route), {
+      "agent.provider":
+        this.provider ?? this.defaultProvider?.provider ?? "unknown",
+      "agent.iteration": iteration,
+    });
+  }
+
+  async #replyInner(route) {
     const fromConfig = this.getAgentConfig(route.from);
     const chatHistory = this.getOrFormatNodeChatHistory(route);
     // Captured before document injection below - skill reranking and model
@@ -1084,7 +1096,25 @@ https://docs.anythingllm.com/agent/intelligent-tool-selection
         `[debug]: ${fn.caller} is attempting to call \`${name}\` tool ${JSON.stringify(args, null, 2)}`
       );
 
-      const result = await fn.handler(args);
+      const toolStartedAt = Date.now();
+      let toolError = null;
+      const result = await withSpan("tool.call", () => fn.handler(args), {
+        "tool.name": name,
+        "tool.arguments_size_bytes": Buffer.byteLength(
+          JSON.stringify(args ?? {})
+        ),
+      })
+        .catch((error) => {
+          toolError = error;
+          throw error;
+        })
+        .finally(() =>
+          recordToolCall({
+            toolName: name,
+            latencyMs: Date.now() - toolStartedAt,
+            error: toolError,
+          })
+        );
       this.emitter.emit("toolCallResult", {
         toolName: name,
         arguments: args,
@@ -1250,7 +1280,25 @@ https://docs.anythingllm.com/agent/intelligent-tool-selection
         `[debug]: ${fn.caller} is attempting to call \`${name}\` tool`
       );
 
-      const result = await fn.handler(args);
+      const toolStartedAt = Date.now();
+      let toolError = null;
+      const result = await withSpan("tool.call", () => fn.handler(args), {
+        "tool.name": name,
+        "tool.arguments_size_bytes": Buffer.byteLength(
+          JSON.stringify(args ?? {})
+        ),
+      })
+        .catch((error) => {
+          toolError = error;
+          throw error;
+        })
+        .finally(() =>
+          recordToolCall({
+            toolName: name,
+            latencyMs: Date.now() - toolStartedAt,
+            error: toolError,
+          })
+        );
       this.emitter.emit("toolCallResult", {
         toolName: name,
         arguments: args,

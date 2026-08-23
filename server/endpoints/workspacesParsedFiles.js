@@ -10,6 +10,10 @@ const { validWorkspaceSlug } = require("../utils/middleware/validWorkspace");
 const { CollectorApi } = require("../utils/collectorApi");
 const { WorkspaceThread } = require("../models/workspaceThread");
 const { WorkspaceParsedFiles } = require("../models/workspaceParsedFiles");
+const {
+  recordDocumentIngestion,
+  withSpan,
+} = require("../utils/observability/ai");
 
 function workspaceParsedFilesEndpoints(app) {
   if (!app) return;
@@ -133,15 +137,27 @@ function workspaceParsedFilesEndpoints(app) {
         const processingOnline = await Collector.online();
 
         if (!processingOnline) {
+          recordDocumentIngestion({
+            result: "error",
+            error: new Error("Document processing API is not online"),
+          });
           return response.status(500).json({
             success: false,
             error: `Document processing API is not online. Document ${originalname} will not be parsed.`,
           });
         }
 
-        const { success, reason, documents } =
-          await Collector.parseDocument(originalname);
+        // PR 09: document.ingest span around the collector parse call.
+        const { success, reason, documents } = await withSpan(
+          "document.ingest",
+          () => Collector.parseDocument(originalname),
+          { "document.name": originalname }
+        );
         if (!success || !documents?.[0]) {
+          recordDocumentIngestion({
+            result: "error",
+            error: new Error(reason || "No document returned from collector"),
+          });
           return response.status(500).json({
             success: false,
             error: reason || "No document returned from collector",
@@ -178,6 +194,7 @@ function workspaceParsedFilesEndpoints(app) {
         );
 
         Collector.log(`Document ${originalname} parsed successfully.`);
+        recordDocumentIngestion({ result: "success" });
         await EventLogs.logEvent(
           "document_uploaded_to_chat",
           {
@@ -194,6 +211,7 @@ function workspaceParsedFilesEndpoints(app) {
           files,
         });
       } catch (e) {
+        recordDocumentIngestion({ result: "error", error: e });
         console.error(e.message, e);
         return response.sendStatus(500).end();
       }

@@ -1,5 +1,6 @@
 const path = require("path");
 const fs = require("fs");
+const { withSpan } = require("../../observability/ai");
 
 class NativeEmbeddingReranker {
   // Memory per model call scales with batch size, and onnxruntime-node never
@@ -227,6 +228,19 @@ class NativeEmbeddingReranker {
    * @returns {Promise<any[]>} - The reranked list of documents.
    */
   async rerank(query, documents, options = { topK: 4 }) {
+    // PR 09: span around the native reranking pass.
+    return withSpan(
+      "rag.rerank",
+      () => this.#rerank(query, documents, options),
+      {
+        "embed.model": this.model,
+        "rag.chunks_retrieved": documents?.length ?? 0,
+        "rag.top_k": options?.topK ?? 4,
+      }
+    );
+  }
+
+  async #rerank(query, documents, options = { topK: 4 }) {
     await this.initClient();
     const model = NativeEmbeddingReranker.#model;
     const tokenizer = NativeEmbeddingReranker.#tokenizer;

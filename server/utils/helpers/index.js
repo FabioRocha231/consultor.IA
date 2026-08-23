@@ -79,6 +79,55 @@
  * @property {Function} embedChunks - Embeds multiple chunks of text.
  */
 
+const { recordRagCall, withSpan } = require("../observability/ai");
+
+function bestScoreFromSources(sources = []) {
+  const scores = sources
+    .map((source) => source?.score ?? source?.metadata?.score)
+    .map(Number)
+    .filter((score) => Number.isFinite(score));
+  return scores.length > 0 ? Math.max(...scores) : null;
+}
+
+function withVectorSearchTracing(db) {
+  if (!db || db.name?.toLowerCase() === "qdrant") return db;
+  const performSimilaritySearch = db.performSimilaritySearch.bind(db);
+  db.performSimilaritySearch = async (params = {}) => {
+    const startedAt = Date.now();
+    const result = await withSpan(
+      "rag.vector_search",
+      () => performSimilaritySearch(params),
+      {
+        "vector.db": db.name,
+        "vector.top_k": params?.topN ?? 4,
+        "vector.score_threshold": params?.similarityThreshold ?? 0.25,
+      }
+    );
+    const chunks = result?.contextTexts?.length ?? 0;
+    recordRagCall({
+      vectorDb: String(db.name).toLowerCase(),
+      chunks,
+      bestScore: bestScoreFromSources(result?.sources),
+      latencyMs: Date.now() - startedAt,
+      noResults: chunks === 0,
+    });
+    return result;
+  };
+  return db;
+}
+
+function withEmbeddingTracing(embedder) {
+  if (!embedder?.embedTextInput) return embedder;
+  const embedTextInput = embedder.embedTextInput.bind(embedder);
+  embedder.embedTextInput = async (...args) => {
+    return withSpan("rag.embed_query", () => embedTextInput(...args), {
+      "embed.model": embedder.model,
+      "embed.tokens": Array.isArray(args[0]) ? args[0].length : 1,
+    });
+  };
+  return embedder;
+}
+
 /**
  * Gets the systems current vector database provider.
  * @param {('pinecone' | 'chroma' | 'chromacloud' | 'lancedb' | 'weaviate' | 'qdrant' | 'milvus' | 'zilliz' | 'astra') | null} getExactly - If provided, this will return an explit provider.
@@ -89,40 +138,40 @@ function getVectorDbClass(getExactly = null) {
   switch (vectorSelection) {
     case "pinecone":
       const { Pinecone } = require("../vectorDbProviders/pinecone");
-      return new Pinecone();
+      return withVectorSearchTracing(new Pinecone());
     case "chroma":
       const { Chroma } = require("../vectorDbProviders/chroma");
-      return new Chroma();
+      return withVectorSearchTracing(new Chroma());
     case "chromacloud":
       const { ChromaCloud } = require("../vectorDbProviders/chromacloud");
-      return new ChromaCloud();
+      return withVectorSearchTracing(new ChromaCloud());
     case "lancedb":
       const { LanceDb } = require("../vectorDbProviders/lance");
-      return new LanceDb();
+      return withVectorSearchTracing(new LanceDb());
     case "weaviate":
       const { Weaviate } = require("../vectorDbProviders/weaviate");
-      return new Weaviate();
+      return withVectorSearchTracing(new Weaviate());
     case "qdrant":
       const { QDrant } = require("../vectorDbProviders/qdrant");
       return new QDrant();
     case "milvus":
       const { Milvus } = require("../vectorDbProviders/milvus");
-      return new Milvus();
+      return withVectorSearchTracing(new Milvus());
     case "zilliz":
       const { Zilliz } = require("../vectorDbProviders/zilliz");
-      return new Zilliz();
+      return withVectorSearchTracing(new Zilliz());
     case "astra":
       const { AstraDB } = require("../vectorDbProviders/astra");
-      return new AstraDB();
+      return withVectorSearchTracing(new AstraDB());
     case "pgvector":
       const { PGVector } = require("../vectorDbProviders/pgvector");
-      return new PGVector();
+      return withVectorSearchTracing(new PGVector());
     default:
       console.error(
         `\x1b[31m[ENV ERROR]\x1b[0m No VECTOR_DB value found in environment! Falling back to LanceDB`
       );
       const { LanceDb: DefaultLanceDb } = require("../vectorDbProviders/lance");
-      return new DefaultLanceDb();
+      return withVectorSearchTracing(new DefaultLanceDb());
   }
 }
 
@@ -274,51 +323,51 @@ function getEmbeddingEngineSelection() {
   switch (engineSelection) {
     case "openai":
       const { OpenAiEmbedder } = require("../EmbeddingEngines/openAi");
-      return new OpenAiEmbedder();
+      return withEmbeddingTracing(new OpenAiEmbedder());
     case "azure":
       const {
         AzureOpenAiEmbedder,
       } = require("../EmbeddingEngines/azureOpenAi");
-      return new AzureOpenAiEmbedder();
+      return withEmbeddingTracing(new AzureOpenAiEmbedder());
     case "localai":
       const { LocalAiEmbedder } = require("../EmbeddingEngines/localAi");
-      return new LocalAiEmbedder();
+      return withEmbeddingTracing(new LocalAiEmbedder());
     case "ollama":
       const { OllamaEmbedder } = require("../EmbeddingEngines/ollama");
-      return new OllamaEmbedder();
+      return withEmbeddingTracing(new OllamaEmbedder());
     case "native":
-      return new NativeEmbedder();
+      return withEmbeddingTracing(new NativeEmbedder());
     case "lmstudio":
       const { LMStudioEmbedder } = require("../EmbeddingEngines/lmstudio");
-      return new LMStudioEmbedder();
+      return withEmbeddingTracing(new LMStudioEmbedder());
     case "cohere":
       const { CohereEmbedder } = require("../EmbeddingEngines/cohere");
-      return new CohereEmbedder();
+      return withEmbeddingTracing(new CohereEmbedder());
     case "voyageai":
       const { VoyageAiEmbedder } = require("../EmbeddingEngines/voyageAi");
-      return new VoyageAiEmbedder();
+      return withEmbeddingTracing(new VoyageAiEmbedder());
     case "litellm":
       const { LiteLLMEmbedder } = require("../EmbeddingEngines/liteLLM");
-      return new LiteLLMEmbedder();
+      return withEmbeddingTracing(new LiteLLMEmbedder());
     case "mistral":
       const { MistralEmbedder } = require("../EmbeddingEngines/mistral");
-      return new MistralEmbedder();
+      return withEmbeddingTracing(new MistralEmbedder());
     case "generic-openai":
       const {
         GenericOpenAiEmbedder,
       } = require("../EmbeddingEngines/genericOpenAi");
-      return new GenericOpenAiEmbedder();
+      return withEmbeddingTracing(new GenericOpenAiEmbedder());
     case "gemini":
       const { GeminiEmbedder } = require("../EmbeddingEngines/gemini");
-      return new GeminiEmbedder();
+      return withEmbeddingTracing(new GeminiEmbedder());
     case "openrouter":
       const { OpenRouterEmbedder } = require("../EmbeddingEngines/openRouter");
-      return new OpenRouterEmbedder();
+      return withEmbeddingTracing(new OpenRouterEmbedder());
     case "lemonade":
       const { LemonadeEmbedder } = require("../EmbeddingEngines/lemonade");
-      return new LemonadeEmbedder();
+      return withEmbeddingTracing(new LemonadeEmbedder());
     default:
-      return new NativeEmbedder();
+      return withEmbeddingTracing(new NativeEmbedder());
   }
 }
 

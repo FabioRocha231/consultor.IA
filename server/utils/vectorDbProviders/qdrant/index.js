@@ -6,6 +6,7 @@ const { v4: uuidv4 } = require("uuid");
 const { toChunks, getEmbeddingEngineSelection } = require("../../helpers");
 const { sourceIdentifier } = require("../../chats");
 const { VectorDatabase } = require("../base");
+const { recordRagCall, withSpan } = require("../../observability/ai");
 
 class QDrant extends VectorDatabase {
   constructor() {
@@ -348,7 +349,37 @@ class QDrant extends VectorDatabase {
     return true;
   }
 
-  async performSimilaritySearch({
+  async performSimilaritySearch(params = {}) {
+    // PR 09: rag.vector_search span + metrics around the Qdrant search flow.
+    const startedAt = Date.now();
+    const result = await withSpan(
+      "rag.vector_search",
+      () => this.#rawPerformSimilaritySearch(params),
+      {
+        "vector.db": this.name,
+        "vector.top_k": params?.topN ?? 4,
+        "vector.score_threshold": params?.similarityThreshold ?? 0.25,
+      }
+    );
+    const chunks = result?.contextTexts?.length ?? 0;
+    recordRagCall({
+      vectorDb: String(this.name).toLowerCase(),
+      chunks,
+      bestScore:
+        Math.max(
+          0,
+          ...(result?.sources || [])
+            .map((source) => source?.score ?? source?.metadata?.score)
+            .map(Number)
+            .filter((score) => Number.isFinite(score))
+        ) || null,
+      latencyMs: Date.now() - startedAt,
+      noResults: chunks === 0,
+    });
+    return result;
+  }
+
+  async #rawPerformSimilaritySearch({
     namespace = null,
     input = "",
     LLMConnector = null,

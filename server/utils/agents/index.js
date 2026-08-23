@@ -18,6 +18,7 @@ const { AgentFlows } = require("../agentFlows");
 const MCPCompatibilityLayer = require("../MCP");
 const { getAndClearInvocationAttachments } = require("../chats/agents");
 const { DocumentManager } = require("../DocumentManager");
+const { recordAgentRun, withSpan } = require("../observability/ai");
 
 class AgentHandler {
   #invocationUUID;
@@ -938,12 +939,36 @@ class AgentHandler {
   }
 
   startAgentCluster() {
-    return this.aibitat.start({
-      from: USER_AGENT.name,
-      to: this.channel ?? WORKSPACE_AGENT.name,
-      content: this.#stripAgentCommand(this.invocation.prompt),
-      attachments: this.attachments,
-    });
+    // PR 09: root agent.reasoning span and run metric.
+    const provider = this.provider ?? "unknown";
+    const startedAt = Date.now();
+    let error = null;
+    return withSpan(
+      "agent.reasoning",
+      async () => {
+        try {
+          return await this.aibitat.start({
+            from: USER_AGENT.name,
+            to: this.channel ?? WORKSPACE_AGENT.name,
+            content: this.#stripAgentCommand(this.invocation.prompt),
+            attachments: this.attachments,
+          });
+        } catch (e) {
+          error = e;
+          throw e;
+        } finally {
+          recordAgentRun({
+            provider,
+            error,
+            latencyMs: Date.now() - startedAt,
+          });
+        }
+      },
+      {
+        "agent.provider": provider,
+        "agent.iteration": 0,
+      }
+    );
   }
 }
 
