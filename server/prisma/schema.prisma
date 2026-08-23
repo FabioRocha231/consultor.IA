@@ -57,6 +57,7 @@ model organization {
   segment   String?
   status    String   @default("active")
   wizardState Json?
+  ragConfig Json?
   publishedAt DateTime?
   n8nWebhookUrl String?
   n8nApiKey     String? // encrypted at rest via EncryptionManager

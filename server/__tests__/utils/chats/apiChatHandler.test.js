@@ -29,6 +29,13 @@ jest.mock("../../../models/workspaceChats", () => ({
     markThreadHistoryInvalidV2: jest.fn(),
   },
 }));
+jest.mock("../../../models/organization", () => ({
+  Organization: {
+    get: jest.fn(),
+    getBySlug: jest.fn(),
+    all: jest.fn(),
+  },
+}));
 jest.mock("../../../utils/chats/index", () => ({
   chatPrompt: jest.fn(),
   sourceIdentifier: jest.fn(),
@@ -86,6 +93,7 @@ jest.mock("../../../utils/agents/ephemeral", () => {
 
 const { ApiChatHandler } = require("../../../utils/chats/apiChatHandler");
 const { WorkspaceChats } = require("../../../models/workspaceChats");
+const { Organization } = require("../../../models/organization");
 const {
   writeResponseChunk,
 } = require("../../../utils/helpers/chat/responses");
@@ -179,6 +187,8 @@ function expectedSavePayload({ user, thread, sessionId }) {
 describe("ApiChatHandler @agent persistence", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    Organization.getBySlug.mockResolvedValue(null);
+    Organization.all.mockResolvedValue([]);
     EphemeralAgentHandler.isAgentInvocation.mockResolvedValue(true);
     WorkspaceChats.new.mockResolvedValue({ chat: { id: 123 } });
     ephemeralMocks.waitForClose.mockResolvedValue(agentResult);

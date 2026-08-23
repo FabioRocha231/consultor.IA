@@ -25,6 +25,12 @@ const {
   sanitizeFileName,
 } = require("../files");
 const { recordLlmCall, withSpan } = require("../observability/ai");
+const {
+  buildNoContextResponse,
+  resolveOrganizationForRag,
+  resolveRagConfig,
+  shouldHandleNoContext,
+} = require("../ragConfig");
 /**
  * @typedef ResponseObject
  * @property {string} id - uuid of response
@@ -130,6 +136,7 @@ async function chatSyncInner({
   workspace,
   message = null,
   mode = null,
+  organization = null,
   user = null,
   thread = null,
   sessionId = null,
@@ -138,6 +145,14 @@ async function chatSyncInner({
 }) {
   const uuid = uuidv4();
   const chatMode = mode ?? workspace?.chatMode ?? "automatic";
+  const ragOrganization = await resolveOrganizationForRag({
+    organization,
+    workspace,
+  });
+  const ragConfig = resolveRagConfig({
+    organization: ragOrganization,
+    workspace,
+  });
 
   // If the user wants to reset the chat history we do so pre-flight
   // and continue execution. If no message is provided then the user intended
@@ -252,10 +267,14 @@ async function chatSyncInner({
 
   // User is trying to query-mode chat a workspace that has no data in it - so
   // we should exit early as no information can be found under these conditions.
-  if ((!hasVectorizedSpace || embeddingsCount === 0) && chatMode === "query") {
-    const textResponse =
-      workspace?.queryRefusalResponse ??
-      "There is no relevant information in this workspace to answer your query.";
+  if (
+    (!hasVectorizedSpace || embeddingsCount === 0) &&
+    shouldHandleNoContext(ragConfig)
+  ) {
+    const { textResponse, ...fallbackMeta } = buildNoContextResponse(
+      ragConfig,
+      workspace
+    );
 
     await WorkspaceChats.new({
       workspaceId: workspace.id,
@@ -265,6 +284,7 @@ async function chatSyncInner({
         sources: [],
         attachments: attachments,
         type: chatMode,
+        ...fallbackMeta,
         metrics: {},
       },
       include: false,
@@ -278,6 +298,7 @@ async function chatSyncInner({
       close: true,
       error: null,
       textResponse,
+      ...fallbackMeta,
       metrics: {},
     };
   }
@@ -336,10 +357,10 @@ async function chatSyncInner({
           namespace: workspace.slug,
           input: message,
           LLMConnector,
-          similarityThreshold: workspace?.similarityThreshold,
-          topN: workspace?.topN,
+          similarityThreshold: ragConfig.similarityThreshold,
+          topN: ragConfig.topK,
           filterIdentifiers: pinnedDocIdentifiers,
-          rerank: workspace?.vectorSearchMode === "rerank",
+          rerank: ragConfig.rerankingEnabled,
         })
       : {
           contextTexts: [],
@@ -365,12 +386,13 @@ async function chatSyncInner({
     "rag.context_build",
     () =>
       fillSourceWindow({
-        nDocs: workspace?.topN || 4,
+        nDocs: ragConfig.topK,
         searchResults: vectorSearchResults.sources,
         history: rawHistory,
         filterIdentifiers: pinnedDocIdentifiers,
       }),
     {
+      "rag.config_source": ragConfig.configSource,
       "rag.chunks_retrieved": vectorSearchResults.sources.length,
       "rag.context_tokens": contextTexts.reduce(
         (total, text) => total + Math.ceil(String(text || "").length / 4),
@@ -391,10 +413,11 @@ async function chatSyncInner({
 
   // If in query mode and no context chunks are found from search, backfill, or pins -  do not
   // let the LLM try to hallucinate a response or use general knowledge and exit early
-  if (chatMode === "query" && contextTexts.length === 0) {
-    const textResponse =
-      workspace?.queryRefusalResponse ??
-      "There is no relevant information in this workspace to answer your query.";
+  if (shouldHandleNoContext(ragConfig) && contextTexts.length === 0) {
+    const { textResponse, ...fallbackMeta } = buildNoContextResponse(
+      ragConfig,
+      workspace
+    );
 
     await WorkspaceChats.new({
       workspaceId: workspace.id,
@@ -404,6 +427,7 @@ async function chatSyncInner({
         sources: [],
         attachments: attachments,
         type: chatMode,
+        ...fallbackMeta,
         metrics: {},
       },
       threadId: thread?.id || null,
@@ -419,6 +443,7 @@ async function chatSyncInner({
       close: true,
       error: null,
       textResponse,
+      ...fallbackMeta,
       metrics: {},
     };
   }
@@ -557,6 +582,7 @@ async function streamChatInner({
   workspace,
   message = null,
   mode = null,
+  organization = null,
   user = null,
   thread = null,
   sessionId = null,
@@ -565,6 +591,14 @@ async function streamChatInner({
 }) {
   const uuid = uuidv4();
   const chatMode = mode ?? workspace?.chatMode ?? "automatic";
+  const ragOrganization = await resolveOrganizationForRag({
+    organization,
+    workspace,
+  });
+  const ragConfig = resolveRagConfig({
+    organization: ragOrganization,
+    workspace,
+  });
 
   // If the user wants to reset the chat history we do so pre-flight
   // and continue execution. If no message is provided then the user intended
@@ -685,10 +719,14 @@ async function streamChatInner({
 
   // User is trying to query-mode chat a workspace that has no data in it - so
   // we should exit early as no information can be found under these conditions.
-  if ((!hasVectorizedSpace || embeddingsCount === 0) && chatMode === "query") {
-    const textResponse =
-      workspace?.queryRefusalResponse ??
-      "There is no relevant information in this workspace to answer your query.";
+  if (
+    (!hasVectorizedSpace || embeddingsCount === 0) &&
+    shouldHandleNoContext(ragConfig)
+  ) {
+    const { textResponse, ...fallbackMeta } = buildNoContextResponse(
+      ragConfig,
+      workspace
+    );
     writeResponseChunk(response, {
       id: uuid,
       type: "textResponse",
@@ -698,6 +736,7 @@ async function streamChatInner({
       close: true,
       error: null,
       metrics: {},
+      ...fallbackMeta,
     });
     await WorkspaceChats.new({
       workspaceId: workspace.id,
@@ -707,6 +746,7 @@ async function streamChatInner({
         sources: [],
         attachments: attachments,
         type: chatMode,
+        ...fallbackMeta,
         metrics: {},
       },
       threadId: thread?.id || null,
@@ -779,10 +819,10 @@ async function streamChatInner({
           namespace: workspace.slug,
           input: message,
           LLMConnector,
-          similarityThreshold: workspace?.similarityThreshold,
-          topN: workspace?.topN,
+          similarityThreshold: ragConfig.similarityThreshold,
+          topN: ragConfig.topK,
           filterIdentifiers: pinnedDocIdentifiers,
-          rerank: workspace?.vectorSearchMode === "rerank",
+          rerank: ragConfig.rerankingEnabled,
         })
       : {
           contextTexts: [],
@@ -809,12 +849,13 @@ async function streamChatInner({
     "rag.context_build",
     () =>
       fillSourceWindow({
-        nDocs: workspace?.topN || 4,
+        nDocs: ragConfig.topK,
         searchResults: vectorSearchResults.sources,
         history: rawHistory,
         filterIdentifiers: pinnedDocIdentifiers,
       }),
     {
+      "rag.config_source": ragConfig.configSource,
       "rag.chunks_retrieved": vectorSearchResults.sources.length,
       "rag.context_tokens": contextTexts.reduce(
         (total, text) => total + Math.ceil(String(text || "").length / 4),
@@ -835,10 +876,11 @@ async function streamChatInner({
 
   // If in query mode and no context chunks are found from search, backfill, or pins -  do not
   // let the LLM try to hallucinate a response or use general knowledge and exit early
-  if (chatMode === "query" && contextTexts.length === 0) {
-    const textResponse =
-      workspace?.queryRefusalResponse ??
-      "There is no relevant information in this workspace to answer your query.";
+  if (shouldHandleNoContext(ragConfig) && contextTexts.length === 0) {
+    const { textResponse, ...fallbackMeta } = buildNoContextResponse(
+      ragConfig,
+      workspace
+    );
     writeResponseChunk(response, {
       id: uuid,
       type: "textResponse",
@@ -847,6 +889,7 @@ async function streamChatInner({
       close: true,
       error: null,
       metrics: {},
+      ...fallbackMeta,
     });
 
     await WorkspaceChats.new({
@@ -857,6 +900,7 @@ async function streamChatInner({
         sources: [],
         attachments: attachments,
         type: chatMode,
+        ...fallbackMeta,
         metrics: {},
       },
       threadId: thread?.id || null,

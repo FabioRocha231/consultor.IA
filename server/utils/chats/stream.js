@@ -9,6 +9,12 @@ const { abortConnectorOnClientDisconnect } = require("../helpers/abortSignals");
 const { grepAgents } = require("./agents");
 const { recordLlmCall, withSpan } = require("../observability/ai");
 const {
+  buildNoContextResponse,
+  resolveOrganizationForRag,
+  resolveRagConfig,
+  shouldHandleNoContext,
+} = require("../ragConfig");
+const {
   grepCommand,
   VALID_COMMANDS,
   chatPrompt,
@@ -26,7 +32,8 @@ async function streamChatWithWorkspace(
   chatMode = "automatic",
   user = null,
   thread = null,
-  attachments = []
+  attachments = [],
+  organization = null
 ) {
   return withSpan(
     "chat.request",
@@ -38,7 +45,8 @@ async function streamChatWithWorkspace(
         chatMode,
         user,
         thread,
-        attachments
+        attachments,
+        organization
       ),
     {
       "chat.workspace_slug": workspace?.slug,
@@ -55,7 +63,8 @@ async function streamChatWithWorkspaceInner(
   chatMode = "automatic",
   user = null,
   thread = null,
-  attachments = []
+  attachments = [],
+  organization = null
 ) {
   const uuid = uuidv4();
   const updatedMessage = await grepCommand(message, user);
@@ -85,6 +94,15 @@ async function streamChatWithWorkspaceInner(
     attachments,
   });
   if (isAgentChat) return;
+
+  const ragOrganization = await resolveOrganizationForRag({
+    organization,
+    workspace,
+  });
+  const ragConfig = resolveRagConfig({
+    organization: ragOrganization,
+    workspace,
+  });
 
   const {
     connector: LLMConnector,
@@ -130,10 +148,14 @@ async function streamChatWithWorkspaceInner(
 
   // User is trying to query-mode chat a workspace that has no data in it - so
   // we should exit early as no information can be found under these conditions.
-  if ((!hasVectorizedSpace || embeddingsCount === 0) && chatMode === "query") {
-    const textResponse =
-      workspace?.queryRefusalResponse ??
-      "There is no relevant information in this workspace to answer your query.";
+  if (
+    (!hasVectorizedSpace || embeddingsCount === 0) &&
+    shouldHandleNoContext(ragConfig)
+  ) {
+    const { textResponse, ...fallbackMeta } = buildNoContextResponse(
+      ragConfig,
+      workspace
+    );
     writeResponseChunk(response, {
       id: uuid,
       type: "textResponse",
@@ -142,6 +164,7 @@ async function streamChatWithWorkspaceInner(
       attachments,
       close: true,
       error: null,
+      ...fallbackMeta,
     });
     await WorkspaceChats.new({
       workspaceId: workspace.id,
@@ -150,6 +173,7 @@ async function streamChatWithWorkspaceInner(
         text: textResponse,
         sources: [],
         type: chatMode,
+        ...fallbackMeta,
         attachments,
       },
       threadId: thread?.id || null,
@@ -219,10 +243,10 @@ async function streamChatWithWorkspaceInner(
           namespace: workspace.slug,
           input: updatedMessage,
           LLMConnector,
-          similarityThreshold: workspace?.similarityThreshold,
-          topN: workspace?.topN,
+          similarityThreshold: ragConfig.similarityThreshold,
+          topN: ragConfig.topK,
           filterIdentifiers: pinnedDocIdentifiers,
-          rerank: workspace?.vectorSearchMode === "rerank",
+          rerank: ragConfig.rerankingEnabled,
         })
       : {
           contextTexts: [],
@@ -248,12 +272,13 @@ async function streamChatWithWorkspaceInner(
     "rag.context_build",
     () =>
       fillSourceWindow({
-        nDocs: workspace?.topN || 4,
+        nDocs: ragConfig.topK,
         searchResults: vectorSearchResults.sources,
         history: rawHistory,
         filterIdentifiers: pinnedDocIdentifiers,
       }),
     {
+      "rag.config_source": ragConfig.configSource,
       "rag.chunks_retrieved": vectorSearchResults.sources.length,
       "rag.context_tokens": contextTexts.reduce(
         (total, text) => total + Math.ceil(String(text || "").length / 4),
@@ -274,10 +299,11 @@ async function streamChatWithWorkspaceInner(
 
   // If in query mode and no context chunks are found from search, backfill, or pins -  do not
   // let the LLM try to hallucinate a response or use general knowledge and exit early
-  if (chatMode === "query" && contextTexts.length === 0) {
-    const textResponse =
-      workspace?.queryRefusalResponse ??
-      "There is no relevant information in this workspace to answer your query.";
+  if (shouldHandleNoContext(ragConfig) && contextTexts.length === 0) {
+    const { textResponse, ...fallbackMeta } = buildNoContextResponse(
+      ragConfig,
+      workspace
+    );
     writeResponseChunk(response, {
       id: uuid,
       type: "textResponse",
@@ -285,6 +311,7 @@ async function streamChatWithWorkspaceInner(
       sources: [],
       close: true,
       error: null,
+      ...fallbackMeta,
     });
 
     await WorkspaceChats.new({
@@ -294,6 +321,7 @@ async function streamChatWithWorkspaceInner(
         text: textResponse,
         sources: [],
         type: chatMode,
+        ...fallbackMeta,
         attachments,
       },
       threadId: thread?.id || null,

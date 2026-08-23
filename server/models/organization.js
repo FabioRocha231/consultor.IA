@@ -51,6 +51,7 @@ const Organization = {
     "segment",
     "status",
     "wizardState",
+    "ragConfig",
     "n8nWebhookUrl",
     "n8nApiKey",
   ],
@@ -90,6 +91,16 @@ const Organization = {
         throw new Error("wizardState must be JSON serializable");
       }
       return value;
+    },
+    ragConfig: (value) => {
+      if (value === null || value === undefined) return null;
+      const {
+        ok,
+        value: parsed,
+        error,
+      } = require("../utils/ragConfig").validateRagConfig(value);
+      if (!ok) throw new Error(error);
+      return parsed;
     },
     n8nWebhookUrl: (value) => {
       if (value === null || value === undefined || value === "") return null;
