@@ -1,11 +1,29 @@
 const { BackgroundService } = require("../BackgroundWorkers");
 const { EncryptionManager } = require("../EncryptionManager");
 const { CommunicationKey } = require("../comKey");
+const { Organization } = require("../../models/organization");
 const eagerLoadContextWindows = require("./eagerLoadContextWindows");
 const markOnboarded = require("./markOnboarded");
 const { PushNotifications } = require("../PushNotifications");
 const { TelegramBotService } = require("../telegramBot");
 const { start: startObservability } = require("../observability");
+
+async function ensureDefaultOrganization() {
+  const count = await Organization.count();
+  if (count > 0) return;
+
+  const { organization, error } = await Organization.create({
+    name: "Default Organization",
+    slug: "default",
+    segment: "atendimento",
+  });
+  if (!organization)
+    throw new Error(`Failed to create default organization: ${error}`);
+
+  console.log(
+    `[boot] Created default organization: ${organization.name} (slug=${organization.slug})`
+  );
+}
 
 // Testing SSL? You can make a self signed certificate and point the ENVs to that location
 // make a directory in server called 'sslcert' - cd into it
@@ -16,12 +34,13 @@ const { start: startObservability } = require("../observability");
 // Update .env keys with the correct values and boot. These are temporary and not real SSL certs - only use for local.
 // Test with https://localhost:3001/api/ping
 // build and copy frontend to server/public with correct API_BASE and start server in prod model and all should be ok
-function bootSSL(app, port = 3001) {
+async function bootSSL(app, port = 3001) {
   try {
     if (process.env.OTEL_SDK_DISABLED !== "true") startObservability();
     console.log(
       `\x1b[33m[SSL BOOT ENABLED]\x1b[0m Loading the certificate and key for HTTPS mode...`
     );
+    await ensureDefaultOrganization();
     const fs = require("fs");
     const https = require("https");
     const privateKey = fs.readFileSync(process.env.HTTPS_KEY_PATH);
@@ -58,10 +77,11 @@ function bootSSL(app, port = 3001) {
   }
 }
 
-function bootHTTP(app, port = 3001) {
+async function bootHTTP(app, port = 3001) {
   if (!app) throw new Error('No "app" defined - crashing!');
 
   if (process.env.OTEL_SDK_DISABLED !== "true") startObservability();
+  await ensureDefaultOrganization();
   app
     .listen(port, async () => {
       await markOnboarded();
