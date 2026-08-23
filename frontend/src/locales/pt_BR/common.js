@@ -1,5 +1,52 @@
 // Anything with "null" requires a translation. Contribute to translation via a PR!
 const TRANSLATIONS = {
+  eval: {
+    title: "Avaliação",
+    loading: "Carregando avaliação...",
+    datasets: {
+      list: "Datasets",
+      new: "Novo dataset",
+      name: "Nome",
+      description: "Descrição",
+      questions: "Perguntas",
+      create: "Criar dataset",
+      delete: "Excluir",
+      deleteConfirm: "Excluir este dataset e todas as execuções?",
+      empty: "Nenhum dataset ainda.",
+      emptySelect: "Selecione um dataset para ver perguntas e execuções.",
+    },
+    questions: {
+      add: "Adicionar pergunta",
+      question: "Pergunta",
+      expectedAnswer: "Resposta esperada",
+      expectedSource: "Fonte esperada",
+      tags: "Tags",
+      remove: "Remover pergunta",
+      delete: "Excluir pergunta",
+      deleteConfirm: "Excluir esta pergunta?",
+    },
+    runs: {
+      start: "Rodar avaliação",
+      status: {
+        pending: "Pendente",
+        running: "Executando",
+        completed: "Concluído",
+        failed: "Falhou",
+      },
+      completed: "Concluído",
+      failed: "Falhou",
+      results: "Execuções",
+      metrics: "Métricas",
+      empty: "Nenhuma execução ainda.",
+    },
+    metrics: {
+      retrievalAccuracy: "Precisão de recuperação",
+      answerCorrectness: "Correção da resposta",
+      citationCorrectness: "Correção da citação",
+      avgLatencyMs: "Latência média (ms)",
+      totalCostUsd: "Custo total (USD)",
+    },
+  },
   dashboard: {
     title: "Dashboard",
     periodLabel: "Período",

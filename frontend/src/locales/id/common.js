@@ -1,5 +1,53 @@
 // Anything with "null" requires a translation. Contribute to translation via a PR!
 const TRANSLATIONS = {
+  "eval": {
+    "title": "Evaluation",
+    "loading": "Loading evaluation...",
+    "datasets": {
+      "list": "Datasets",
+      "new": "New dataset",
+      "name": "Name",
+      "description": "Description",
+      "questions": "Questions",
+      "create": "Create dataset",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this dataset and all its runs?",
+      "empty": "No datasets yet.",
+      "emptySelect": "Select a dataset to view questions and runs."
+    },
+    "questions": {
+      "add": "Add question",
+      "question": "Question",
+      "expectedAnswer": "Expected answer",
+      "expectedSource": "Expected source",
+      "tags": "Tags",
+      "remove": "Remove question",
+      "delete": "Delete question",
+      "deleteConfirm": "Delete this question?"
+    },
+    "runs": {
+      "start": "Run evaluation",
+      "status": {
+        "pending": "Pending",
+        "running": "Running",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "completed": "Completed",
+      "failed": "Failed",
+      "results": "Runs",
+      "metrics": "Metrics",
+      "empty": "No runs yet."
+    },
+    "metrics": {
+      "retrievalAccuracy": "Retrieval accuracy",
+      "answerCorrectness": "Answer correctness",
+      "citationCorrectness": "Citation correctness",
+      "avgLatencyMs": "Average latency (ms)",
+      "totalCostUsd": "Total cost (USD)"
+    }
+  },
+
   dashboard: {
     title: "Dashboard",
     periodLabel: "Period",
