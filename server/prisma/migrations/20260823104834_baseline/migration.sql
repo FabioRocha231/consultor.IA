@@ -59,6 +59,7 @@ CREATE TABLE "organization" (
     "segment" TEXT,
     "status" TEXT NOT NULL DEFAULT 'active',
     "wizardState" JSONB,
+    "ragConfig" JSONB,
     "publishedAt" TIMESTAMP(3),
     "n8nWebhookUrl" TEXT,
     "n8nApiKey" TEXT,
