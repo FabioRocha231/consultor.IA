@@ -27,5 +27,29 @@ services:
       - .env
     networks:
       - anything-llm
+    depends_on:
+      postgres:
+        condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: consultor-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: consultor
+      POSTGRES_PASSWORD: consultor
+      POSTGRES_DB: consultor
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U consultor -d consultor"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:

@@ -40,8 +40,7 @@ const WorkspaceSuggestedMessages = {
       });
 
       // Create new messages
-      // We create each message individually because prisma
-      // with sqlite does not support createMany()
+      // We create each message individually in this path.
       for (const message of messages) {
         await prisma.workspace_suggested_messages.create({
           data: {

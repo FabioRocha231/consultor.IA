@@ -14,6 +14,22 @@ on:
 jobs:
   run-script:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: consultor
+          POSTGRES_PASSWORD: consultor
+          POSTGRES_DB: consultor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U consultor"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_URL: postgresql://consultor:consultor@localhost:5432/consultor
 
     steps:
       - name: Checkout repository

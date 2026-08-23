@@ -49,6 +49,7 @@ const { memoryEndpoints } = require("./endpoints/memory");
 const { requestContext } = require("./middleware/requestContext");
 const { httpLogger } = require("./middleware/httpLogger");
 const { healthEndpoints } = require("./endpoints/health");
+const { organizationEndpoints } = require("./endpoints/organization");
 const app = express();
 const apiRouter = express.Router();
 const FILE_LIMIT = "3GB";
@@ -74,6 +75,7 @@ if (!!process.env.ENABLE_HTTPS) {
 app.use("/api", apiRouter);
 systemEndpoints(apiRouter);
 healthEndpoints(apiRouter);
+organizationEndpoints(apiRouter);
 extensionEndpoints(apiRouter);
 workspaceEndpoints(apiRouter);
 workspaceThreadEndpoints(apiRouter);

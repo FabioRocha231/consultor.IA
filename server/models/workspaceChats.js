@@ -326,8 +326,7 @@ const WorkspaceChats = {
   },
 
   bulkCreate: async function (chatsData) {
-    // TODO: Replace with createMany when we update prisma to latest version
-    // The version of prisma that we are currently using does not support createMany with SQLite
+    // TODO: Replace with createMany when supported by the current Prisma version.
     try {
       const createdChats = [];
       for (const chatData of chatsData) {
