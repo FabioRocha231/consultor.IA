@@ -1,5 +1,69 @@
 // Anything with "null" requires a translation. Contribute to translation via a PR!
 const TRANSLATIONS = {
+  dashboard: {
+    title: "Dashboard",
+    periodLabel: "Período",
+    period: {
+      "7d": "7 dias",
+      "30d": "30 dias",
+      all: "Todo período",
+    },
+    kpi: {
+      conversations: "Conversas",
+      messages: "Mensagens",
+      positiveRate: "Feedback positivo",
+      cost: "Custo estimado",
+      latency: "Latência p95",
+    },
+    sections: {
+      usage: "Uso",
+      feedback: "Feedback",
+      costs: "Custos",
+      performance: "Desempenho",
+      topDocuments: "Documentos mais recuperados",
+      tools: "Tools n8n",
+      errors: "Erros",
+      config: "Configuração RAG",
+    },
+    feedback: {
+      positive: "Positivos",
+      negative: "Negativos",
+      byCategory: "Por categoria",
+    },
+    empty: {
+      usage: "Sem dados ainda",
+      costs: "Sem dados ainda",
+      topDocuments: "Sem dados ainda",
+      tools: "Sem dados ainda",
+      errors: "Sem dados ainda",
+      config: "Sem dados ainda",
+    },
+    notCollected: "Latência não coletada no momento",
+    generatedAt: "Gerado em",
+    activeUsers: "usuários ativos",
+    loading: "Carregando dashboard...",
+    error: "Não foi possível carregar o dashboard.",
+    performance: {
+      llmP50: "LLM P50",
+      ttftP50: "Tempo até o primeiro token P50",
+      ragP50: "RAG retrieval P50",
+      ragP95: "RAG retrieval P95",
+      toolP95: "Tool call P95",
+    },
+    costs: {
+      model: "Modelo",
+      calls: "Chamadas",
+      inputTokens: "Tokens de entrada",
+      outputTokens: "Tokens de saída",
+      costUsd: "Custo (USD)",
+    },
+    config: {
+      topK: "Top K",
+      similarityThreshold: "Limiar de similaridade",
+      fallbackBehavior: "Comportamento de fallback",
+      modelPricingVersion: "Versão de pricing",
+    },
+  },
   onboarding: {
     welcome:
       "Vamos configurar sua IA para o negócio. Sem configuração técnica: só perguntas sobre sua empresa.",

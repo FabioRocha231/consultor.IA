@@ -1,5 +1,70 @@
 // Anything with "null" requires a translation. Contribute to translation via a PR!
 const TRANSLATIONS = {
+  dashboard: {
+    title: "Dashboard",
+    periodLabel: "Period",
+    period: {
+      "7d": "7 days",
+      "30d": "30 days",
+      all: "All time",
+    },
+    kpi: {
+      conversations: "Conversations",
+      messages: "Messages",
+      positiveRate: "Positive feedback",
+      cost: "Estimated cost",
+      latency: "P95 latency",
+    },
+    sections: {
+      usage: "Usage",
+      feedback: "Feedback",
+      costs: "Costs",
+      performance: "Performance",
+      topDocuments: "Top documents",
+      tools: "n8n tools",
+      errors: "Errors",
+      config: "RAG configuration",
+    },
+    feedback: {
+      positive: "Positive",
+      negative: "Negative",
+      byCategory: "By category",
+    },
+    empty: {
+      usage: "No data yet",
+      costs: "No data yet",
+      topDocuments: "No data yet",
+      tools: "No data yet",
+      errors: "No data yet",
+      config: "No data yet",
+    },
+    notCollected: "Latency not collected yet",
+    generatedAt: "Generated at",
+    activeUsers: "active users",
+    loading: "Loading dashboard...",
+    error: "Could not load the dashboard.",
+    performance: {
+      llmP50: "LLM P50",
+      ttftP50: "Time to first token P50",
+      ragP50: "RAG retrieval P50",
+      ragP95: "RAG retrieval P95",
+      toolP95: "Tool call P95",
+    },
+    costs: {
+      model: "Model",
+      calls: "Calls",
+      inputTokens: "Input tokens",
+      outputTokens: "Output tokens",
+      costUsd: "Cost (USD)",
+    },
+    config: {
+      topK: "Top K",
+      similarityThreshold: "Similarity threshold",
+      fallbackBehavior: "Fallback behavior",
+      modelPricingVersion: "Model pricing version",
+    },
+  },
+
   feedback: {
     thanks: "Thank you for your feedback!",
     title: "What went wrong with this response?",
