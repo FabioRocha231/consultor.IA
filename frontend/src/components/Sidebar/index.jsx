@@ -1,9 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   ChartLineUp,
+  Database,
+  GearSix,
+  House,
   List,
   MagnifyingGlass,
-  Plus,
+  Question,
+  Scroll,
+  SlidersHorizontal,
+  SquaresFour,
+  UserPlus,
+  UsersThree,
 } from "@phosphor-icons/react";
 import NewWorkspaceModal, {
   useNewWorkspaceModal,
@@ -66,12 +74,10 @@ export default function Sidebar() {
             <div className="flex flex-col h-full overflow-hidden">
               <div className="flex-grow flex flex-col min-w-[235px] min-h-0">
                 <div className="relative h-[calc(100%-60px)] flex flex-col w-full justify-between pt-[10px] overflow-y-scroll no-scroll">
-                  <div className="flex flex-col gap-y-[14px]">
-                    <SearchBox user={user} showNewWsModal={showNewWsModal} />
-                    <DashboardLink user={user} />
-                    <EvalLink user={user} />
-                    <ActiveWorkspaces />
-                  </div>
+                  <SidebarNavigation
+                    user={user}
+                    showNewWsModal={showNewWsModal}
+                  />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 pb-3 rounded-b-[16px] bg-theme-bg-sidebar light:bg-slate-200 bg-opacity-80 backdrop-filter backdrop-blur-md z-10">
                   <Footer />
@@ -175,15 +181,10 @@ export function SidebarMobileHeader() {
             {/* Primary Body */}
             <div className="h-full flex flex-col w-full justify-between pt-4 ">
               <div className="h-auto md:sidebar-items">
-                <div className=" flex flex-col gap-y-4 overflow-y-scroll no-scroll pb-[60px]">
-                  <NewWorkspaceButton
-                    user={user}
-                    showNewWsModal={showNewWsModal}
-                  />
-                  <DashboardLink user={user} />
-                  <EvalLink user={user} />
-                  <ActiveWorkspaces />
-                </div>
+                <SidebarNavigation
+                  user={user}
+                  showNewWsModal={showNewWsModal}
+                />
               </div>
               <div className="z-99 absolute bottom-0 left-0 right-0 pt-2 pb-6 rounded-br-[26px] bg-theme-bg-sidebar bg-opacity-80 backdrop-filter backdrop-blur-md">
                 <Footer />
@@ -197,51 +198,166 @@ export function SidebarMobileHeader() {
   );
 }
 
-function NewWorkspaceButton({ user, showNewWsModal }) {
+function SidebarNavigation({ user, showNewWsModal }) {
   const { t } = useTranslation();
-  if (!!user && user?.role === "default") return null;
+  const role = user?.role || "admin";
+  const isAdmin = role === "admin";
+  const isManager = role === "manager";
+  const isDefault = role === "default";
 
   return (
-    <div className="flex gap-x-2 items-center justify-between">
-      <button
-        onClick={showNewWsModal}
-        className="flex flex-grow w-[75%] h-[44px] gap-x-2 py-[5px] px-4 bg-white rounded-lg text-sidebar justify-center items-center hover:bg-opacity-80 transition-all duration-300"
-      >
-        <Plus className="h-5 w-5" />
-        <p className="text-sidebar text-sm font-semibold">
-          {t("new-workspace.title")}
-        </p>
-      </button>
+    <div className="flex flex-col gap-y-[14px] pb-[60px]">
+      <SearchBox user={user} showNewWsModal={showNewWsModal} />
+
+      <div className="flex flex-col gap-y-[6px]">
+        {!isDefault && (
+          <SectionLabel>{t("nav.sections.business")}</SectionLabel>
+        )}
+        {!isDefault ? (
+          <>
+            <SidebarNavItem
+              to={paths.home()}
+              icon={<House size={16} weight="bold" />}
+              label={t("nav.home")}
+            />
+            <SidebarNavItem
+              to={paths.dashboard()}
+              icon={<ChartLineUp size={16} weight="bold" />}
+              label={t("dashboard.title")}
+            />
+            <SidebarNavItem
+              to={paths.eval()}
+              icon={<MagnifyingGlass size={16} weight="bold" />}
+              label={t("eval.title")}
+            />
+            {isManager && (
+              <SidebarNavItem
+                to={paths.settings.invites()}
+                icon={<UserPlus size={16} weight="bold" />}
+                label={t("nav.inviteUsers")}
+              />
+            )}
+            {isManager && (
+              <SidebarNavItem
+                to={paths.settings.workspaces()}
+                icon={<SquaresFour size={16} weight="bold" />}
+                label={t("nav.workspaceSettings")}
+              />
+            )}
+          </>
+        ) : (
+          <SidebarNavItem
+            to={paths.home()}
+            icon={<House size={16} weight="bold" />}
+            label={t("nav.home")}
+          />
+        )}
+      </div>
+
+      <div className="flex flex-col gap-y-[6px]">
+        <SectionLabel>{t("nav.workspaces")}</SectionLabel>
+        <ActiveWorkspaces />
+      </div>
+
+      {isAdmin && (
+        <>
+          <Divider />
+          <div className="flex flex-col gap-y-[6px]">
+            <SectionLabel>{t("nav.sections.technical")}</SectionLabel>
+            <SidebarNavItem
+              to={paths.settings.llmPreference()}
+              icon={<GearSix size={16} weight="bold" />}
+              label={t("settings.llm")}
+            />
+            <SidebarNavItem
+              to={paths.settings.embeddingPreference()}
+              icon={<SlidersHorizontal size={16} weight="bold" />}
+              label={t("settings.embedder")}
+            />
+            <SidebarNavItem
+              to={paths.settings.vectorDatabase()}
+              icon={<Database size={16} weight="bold" />}
+              label={t("settings.vector-database")}
+            />
+            <SidebarNavItem
+              to={paths.settings.agentSkills()}
+              icon={<GearSix size={16} weight="bold" />}
+              label={t("settings.agent-skills")}
+            />
+            <SidebarNavItem
+              to={paths.settings.embedder.chunkingPreference()}
+              icon={<GearSix size={16} weight="bold" />}
+              label={t("settings.text-splitting")}
+            />
+          </div>
+        </>
+      )}
+
+      {isAdmin && (
+        <>
+          <Divider />
+          <div className="flex flex-col gap-y-[6px]">
+            <SectionLabel>{t("nav.sections.admin")}</SectionLabel>
+            <SidebarNavItem
+              to={paths.settings.users()}
+              icon={<UsersThree size={16} weight="bold" />}
+              label={t("settings.users")}
+            />
+            <SidebarNavItem
+              to={paths.settings.logs()}
+              icon={<Scroll size={16} weight="bold" />}
+              label={t("settings.event-logs")}
+            />
+            <SidebarNavItem
+              to={paths.settings.interface()}
+              icon={<SlidersHorizontal size={16} weight="bold" />}
+              label={t("nav.systemSettings")}
+            />
+          </div>
+        </>
+      )}
+
+      {isDefault && (
+        <SidebarNavItem
+          to="https://docs.consultor-ia.com"
+          external={true}
+          icon={<Question size={16} weight="bold" />}
+          label={t("nav.help")}
+        />
+      )}
     </div>
   );
 }
 
-function DashboardLink({ user }) {
-  const { t } = useTranslation();
-  if (!!user && user?.role === "default") return null;
-
+function SectionLabel({ children }) {
   return (
-    <Link
-      to={paths.dashboard()}
-      className="flex items-center gap-x-2 h-[32px] px-3 rounded-lg bg-theme-sidebar-item-default text-theme-text-primary text-sm font-medium hover:bg-theme-sidebar-subitem-hover transition-all duration-200"
-    >
-      <ChartLineUp size={16} weight="bold" />
-      {t("dashboard.title")}
-    </Link>
+    <p className="text-theme-text-secondary text-xs uppercase font-semibold px-[4px] mt-[4px]">
+      {children}
+    </p>
   );
 }
 
-function EvalLink({ user }) {
-  const { t } = useTranslation();
-  if (!!user && user?.role === "default") return null;
+function Divider() {
+  return <div className="h-[1.5px] bg-theme-sidebar-border mx-1 my-[6px]" />;
+}
 
-  return (
-    <Link
-      to={paths.eval()}
-      className="flex items-center gap-x-2 h-[32px] px-3 rounded-lg bg-theme-sidebar-item-default text-theme-text-primary text-sm font-medium hover:bg-theme-sidebar-subitem-hover transition-all duration-200"
-    >
-      <MagnifyingGlass size={16} weight="bold" />
-      {t("eval.title")}
+function SidebarNavItem({ to, label, icon, external = false }) {
+  const className =
+    "flex items-center gap-x-2 h-[32px] px-3 rounded-lg bg-theme-sidebar-item-default text-theme-text-primary text-sm font-medium hover:bg-theme-sidebar-subitem-hover transition-all duration-200";
+  const content = (
+    <>
+      {icon}
+      <span className="truncate">{label}</span>
+    </>
+  );
+
+  return external ? (
+    <a href={to} target="_blank" rel="noreferrer" className={className}>
+      {content}
+    </a>
+  ) : (
+    <Link to={to} className={className}>
+      {content}
     </Link>
   );
 }

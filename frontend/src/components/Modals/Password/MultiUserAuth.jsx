@@ -293,11 +293,16 @@ export default function MultiUserAuth() {
           <div className="flex items-center flex-col gap-y-[18px] max-w-[300px]">
             <div className="flex gap-x-1">
               <h3 className="text-white light:text-slate-950 text-[38px] leading-[28px] font-medium text-center white-space-nowrap block">
-                {t("login.multi-user.welcome")}
+                {t("branding.welcome")}
               </h3>
             </div>
             <p className="text-zinc-400 light:text-zinc-600 text-sm text-center">
-              {t("login.sign-in", { appName: customAppName || "AnythingLLM" })}
+              {t("branding.tagline")}
+            </p>
+            <p className="text-zinc-400 light:text-zinc-600 text-sm text-center">
+              {t("login.sign-in", {
+                appName: customAppName || t("branding.productName"),
+              })}
             </p>
           </div>
         </div>

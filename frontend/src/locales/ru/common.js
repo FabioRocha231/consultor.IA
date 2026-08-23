@@ -1,5 +1,28 @@
 // Anything with "null" requires a translation. Contribute to translation via a PR!
 const TRANSLATIONS = {
+  branding: {
+    productName: "consultor.IA",
+    tagline: "Set up your business AI in minutes",
+    welcome: "Welcome to consultor.IA",
+  },
+  nav: {
+    home: "Home",
+    workspaces: "Workspaces",
+    help: "Help",
+    inviteUsers: "Invite Users",
+    workspaceSettings: "Workspace Settings",
+    systemSettings: "System Settings",
+    sections: {
+      business: "Business",
+      technical: "Technical",
+      admin: "Admin",
+    },
+    role: {
+      admin: "Full access to all settings",
+      manager: "Business settings without technical configuration",
+      default: "Chat access only",
+    },
+  },
   eval: {
     title: "Evaluation",
     loading: "Loading evaluation...",

@@ -58,22 +58,22 @@ export default {
     },
   },
   github: () => {
-    return "https://github.com/Mintplex-Labs/anything-llm";
+    return "https://github.com/consultor-ia/consultor.IA";
   },
   discord: () => {
-    return "https://discord.com/invite/6UyHPeGZAC";
+    return "https://discord.gg/consultor-ia";
   },
   docs: (path = "") => {
-    return `https://docs.anythingllm.com${path}`;
+    return `https://docs.consultor-ia.com${path}`;
   },
   chatModes: () => {
-    return "https://docs.anythingllm.com/features/chat-modes";
+    return "https://docs.consultor-ia.com/features/chat-modes";
   },
-  mailToMintplex: () => {
-    return "mailto:team@mintplexlabs.com";
+  mailToSupport: () => {
+    return "mailto:suporte@consultor-ia.com";
   },
   hosting: () => {
-    return "https://my.mintplexlabs.com/aio-checkout?product=anythingllm";
+    return "https://consultor-ia.com";
   },
   workspace: {
     chat: (slug, options = {}) => {
@@ -211,13 +211,12 @@ export default {
       return `/settings/agents/builder/${uuid}`;
     },
   },
-  // TODO: Migrate all docs.anythingllm.com links to the new docs.
   documentation: {
     mobileIntroduction: () => {
-      return "https://docs.anythingllm.com/mobile/overview";
+      return "https://docs.consultor-ia.com/mobile/overview";
     },
     contextWindows: () => {
-      return "https://docs.anythingllm.com/chatting-with-documents/introduction#you-exceed-the-context-window---what-now";
+      return "https://docs.consultor-ia.com/chatting-with-documents/introduction#you-exceed-the-context-window---what-now";
     },
   },
 
