@@ -19,11 +19,12 @@ const DEFAULT_SETTINGS = {
   userBgColor: "#2C2F35", // user text bubble color
   assistantBgColor: "#2563eb", // assistant text bubble color
   noSponsor: null, // Shows sponsor in footer of chat
-  sponsorText: "Powered by AnythingLLM", // default sponsor text
-  sponsorLink: "https://anythingllm.com", // default sponsor link
+  sponsorText: "Powered by consultor.IA", // default sponsor text
+  sponsorLink: "https://consultor.IA", // default sponsor link
   position: "bottom-right", // position of chat button/window
-  assistantName: "AnythingLLM Chat Assistant", // default assistant name
+  assistantName: "consultor.IA Chat Assistant", // default assistant name
   assistantIcon: null, // default assistant icon
+  allowExternalDomains: [], // comma-separated domains allowed for configurable URLs
   windowHeight: null, // height of chat window in number:css-prefix
   windowWidth: null, // width of chat window in number:css-prefix
   textSize: null, // text size in px (number only)
@@ -53,7 +54,7 @@ export default function useGetScriptAttributes() {
         !embedderSettings.settings.embedId
       )
         throw new Error(
-          "[AnythingLLM Embed Module::Abort] - Invalid script tag setup detected. Missing required parameters for boot!"
+          "[consultor.IA Embed Module::Abort] - Invalid script tag setup detected. Missing required parameters for boot!"
         );
 
       setSettings({
@@ -87,9 +88,17 @@ const validations = {
         );
       return list.map((v) => v.trim());
     } catch (e) {
-      console.error("AnythingLLMEmbed", e);
+      console.error("consultorIAEmbed", e);
       return this._fallbacks.defaultMessages;
     }
+  },
+
+  allowExternalDomains: function (value = null) {
+    if (!value || typeof value !== "string") return [];
+    return value
+      .split(",")
+      .map((domain) => domain.trim().toLowerCase())
+      .filter(Boolean);
   },
 };
 

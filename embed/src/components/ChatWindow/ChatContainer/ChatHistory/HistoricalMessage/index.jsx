@@ -2,6 +2,7 @@ import React, { memo, forwardRef, useState } from "react";
 import { Warning, CaretDown } from "@phosphor-icons/react";
 import renderMarkdown from "@/utils/chat/markdown";
 import DOMPurify from "@/utils/chat/purify";
+import { isAllowedEmbedUrl } from "@/utils/urlAllowlist";
 import { embedderSettings } from "@/main";
 import { v4 } from "uuid";
 import AnythingLLMIcon from "@/assets/anything-llm-icon.svg";
@@ -51,7 +52,14 @@ const HistoricalMessage = forwardRef(
     const textSize = !!embedderSettings.settings.textSize
       ? `allm-text-[${embedderSettings.settings.textSize}px]`
       : "allm-text-sm";
-    if (error) console.error(`ANYTHING_LLM_CHAT_WIDGET_ERROR: ${error}`);
+    if (error) console.error(`CONSULTOR_IA_CHAT_WIDGET_ERROR: ${error}`);
+
+    const assistantIcon = isAllowedEmbedUrl(
+      embedderSettings.settings.assistantIcon,
+      embedderSettings.settings.allowExternalDomains
+    )
+      ? embedderSettings.settings.assistantIcon
+      : AnythingLLMIcon;
 
     // Extract content between think tags if they exist
     const thinkMatches = message?.match(/<think>([\s\S]*?)<\/think>/g) || [];
@@ -69,7 +77,7 @@ const HistoricalMessage = forwardRef(
         {role === "assistant" && (
           <div className="allm-text-[10px] allm-text-gray-400 allm-ml-[54px] allm-mr-6 allm-mb-2 allm-text-left allm-font-sans">
             {embedderSettings.settings.assistantName ||
-              "Anything LLM Chat Assistant"}
+              "consultor.IA Chat Assistant"}
           </div>
         )}
         <div
@@ -81,8 +89,8 @@ const HistoricalMessage = forwardRef(
         >
           {role === "assistant" && (
             <img
-              src={embedderSettings.settings.assistantIcon || AnythingLLMIcon}
-              alt="Anything LLM Icon"
+              src={assistantIcon}
+              alt="consultor.IA Icon"
               className="allm-w-9 allm-h-9 allm-flex-shrink-0 allm-ml-2"
               id="anything-llm-icon"
             />

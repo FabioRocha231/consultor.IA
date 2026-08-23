@@ -1,25 +1,25 @@
-# AnythingLLM Embedded Chat Widget
+# consultor.IA Embedded Chat Widget
 
-**This is a submodule of [AnythingLLM](https://github.com/Mintplex-Labs/anything-llm) - the all-in-one AI Application**
+**This component is a fork of [AnythingLLM](https://github.com/Mintplex-Labs/anything-llm), maintained as consultor.IA.**
 
 **Please report any issues or feature requests to the [main repo](https://github.com/Mintplex-Labs/anything-llm)**
 
 > [!WARNING]
-> The core AnythingLLM team publishes a pre-built version of the script that is bundled
+> The consultor.IA team publishes a pre-built version of the script that is bundled
 > with the main application. You can find [it in the main repo here.](https://github.com/Mintplex-Labs/anything-llm/tree/master/frontend/public/embed)
-> You should only be working in this repo if you are wanting to build your own custom embed widget for AnythingLLM
+> You should only be working in this repo if you are wanting to build your own custom embed widget for consultor.IA
 
-This folder of AnythingLLM contains the source code for how the embedded version of AnythingLLM works to provide a public facing interface of your workspace.
+This folder contains the source code for how the embedded version of consultor.IA works to provide a public facing interface of your workspace.
 
-The AnythingLLM Embedded chat widget allows you to expose a workspace and its embedded knowledge base as a chat bubble via a `<script>` or `<iframe>` element that you can embed in a website or HTML.
+The consultor.IA Embedded chat widget allows you to expose a workspace and its embedded knowledge base as a chat bubble via a `<script>` or `<iframe>` element that you can embed in a website or HTML.
 
 ### Security
 
-- Users will _not_ be able to view or read context snippets like they can in the core AnythingLLM application
+- Users will _not_ be able to view or read context snippets like they can in the core consultor.IA application
 - Users are assigned a random session ID that they use to persist a chat session.
 - **Recommended** You can limit both the number of chats an embedding can process **and** per-session.
 
-_by using the AnythingLLM embedded chat widget you are responsible for securing and configuration of the embed as to not allow excessive chat model abuse of your instance_
+_by using the consultor.IA embedded chat widget you are responsible for securing and configuration of the embed as to not allow excessive chat model abuse of your instance_
 
 ### Developer Setup
 
@@ -42,7 +42,7 @@ The primary way of embedding a workspace as a chat widget is via a simple `<scri
 An example of a script tag embed
 REQUIRED data attributes:
   data-embed-id // The unique id of your embed with its default settings
-  data-base-api-url // The URL of your anythingLLM instance backend
+  data-base-api-url // The URL of your consultor.IA instance backend
 -->
 <script
   data-embed-id="5fc05aaf-2f2c-4c84-87a3-367a4692c1ee"
@@ -57,9 +57,9 @@ REQUIRED data attributes:
 
 - `data-prompt` — Override the chat window with a custom system prompt. This is not visible to the user. If undefined it will use the embeds attached workspace system prompt.
 
-- `data-model` — Override the chat model used for responses. This must be a valid model string for your AnythingLLM LLM provider. If unset it will use the embeds attached workspace model selection or the system setting.
+- `data-model` — Override the chat model used for responses. This must be a valid model string for your consultor.IA LLM provider. If unset it will use the embeds attached workspace model selection or the system setting.
 
-- `data-temperature` — Override the chat model temperature. This must be a valid value for your AnythingLLM LLM provider. If unset it will use the embeds attached workspace model temperature or the system setting.
+- `data-temperature` — Override the chat model temperature. This must be a valid value for your consultor.IA LLM provider. If unset it will use the embeds attached workspace model temperature or the system setting.
 
 **Language & Localization**
 
@@ -89,9 +89,11 @@ REQUIRED data attributes:
 
 - `data-position` - Adjust the positioning of the embed chat widget and open chat button. Default `bottom-right`. Options are `bottom-right`, `bottom-left`, `top-right`, `top-left`.
 
-- `data-assistant-name` - Set the chat assistant name that appears above each chat message. Default `AnythingLLM Chat Assistant`
+- `data-assistant-name` - Set the chat assistant name that appears above each chat message. Default `consultor.IA Chat Assistant`
 
 - `data-assistant-icon` - Set the icon of the chat assistant.
+
+- `data-allow-external-domains` - Comma-separated list of domains allowed for `data-brand-image-url`, `data-assistant-icon` and `data-sponsor-link`. Default is empty, so only same-origin URLs are allowed.
 
 - `data-window-height` - Set the chat window height. **must include CSS suffix:** `px`,`%`,`rem`
 
@@ -99,7 +101,7 @@ REQUIRED data attributes:
 
 - `data-text-size` - Set the text size of the chats in pixels.
 
-- `data-username` - A specific readable name or identifier for the client for your reference. Will be shown in AnythingLLM chat logs. If empty it will not be reported.
+- `data-username` - A specific readable name or identifier for the client for your reference. Will be shown in consultor.IA chat logs. If empty it will not be reported.
 
 - `data-default-messages` - A string of comma-separated messages you want to display to the user when the chat widget has no history. Example: `"How are you?, What is so interesting about this project?, Tell me a joke."`
 

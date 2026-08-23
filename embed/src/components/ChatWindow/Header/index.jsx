@@ -1,5 +1,6 @@
 import AnythingLLMIcon from "@/assets/anything-llm-icon.svg";
 import ChatService from "@/models/chatService";
+import { isAllowedEmbedUrl } from "@/utils/urlAllowlist";
 import {
   ArrowCounterClockwise,
   Check,
@@ -21,6 +22,12 @@ export default function ChatWindowHeader({
   const [showingOptions, setShowOptions] = useState(false);
   const menuRef = useRef();
   const buttonRef = useRef();
+  const safeIconUrl = isAllowedEmbedUrl(
+    iconUrl,
+    settings.allowExternalDomains
+  )
+    ? iconUrl
+    : null;
 
   const handleChatReset = async () => {
     await ChatService.resetEmbedChatSession(settings, sessionId);
@@ -53,8 +60,8 @@ export default function ChatWindowHeader({
       <div className="allm-flex allm-justify-center allm-items-center allm-w-full allm-h-[76px]">
         <img
           style={{ maxWidth: 48, maxHeight: 48 }}
-          src={iconUrl ?? AnythingLLMIcon}
-          alt={iconUrl ? "Brand" : "AnythingLLM Logo"}
+          src={safeIconUrl ?? AnythingLLMIcon}
+          alt={safeIconUrl ? "Brand" : "consultor.IA"}
         />
       </div>
       <div className="allm-absolute allm-right-0 allm-flex allm-gap-x-1 allm-items-center allm-px-[22px]">
