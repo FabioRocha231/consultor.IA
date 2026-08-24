@@ -39,6 +39,10 @@ function getAITracer() {
   return trace.getTracer(AI_SCOPE);
 }
 
+function getActiveTraceId() {
+  return trace.getActiveSpan()?.spanContext()?.traceId || null;
+}
+
 function getAIMeter() {
   return metrics.getMeter(AI_SCOPE);
 }
@@ -428,6 +432,7 @@ function recordEvalLatency({ organization = null, latencyMs = null } = {}) {
 
 module.exports = {
   getAITracer,
+  getActiveTraceId,
   getAIMeter,
   getMetricSnapshot,
   withSpan,

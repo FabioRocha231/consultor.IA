@@ -571,6 +571,7 @@ function workspaceEndpoints(app) {
             feedbackScore: result.chat.feedbackScore,
             feedbackCategory: result.chat.feedbackCategory,
             feedbackComment: result.chat.feedbackComment,
+            traceId: result.chat.traceId || null,
             feedbackAt: result.chat.feedbackAt,
           },
         });

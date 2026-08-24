@@ -2,14 +2,22 @@
 jest.mock("../../utils/prisma", () => ({
   workspace_chats: {
     update: jest.fn(),
+    create: jest.fn(),
+    upsert: jest.fn(),
   },
+}));
+jest.mock("../../utils/observability/ai", () => ({
+  getActiveTraceId: jest.fn(),
 }));
 
 const prisma = require("../../utils/prisma");
+const { getActiveTraceId } = require("../../utils/observability/ai");
 const {
   WorkspaceChats,
   VALID_FEEDBACK_CATEGORIES,
 } = require("../../models/workspaceChats");
+
+const TRACE_ID = "0123456789abcdef0123456789abcdef";
 
 describe("WorkspaceChats.updateFeedbackScore", () => {
   beforeEach(() => jest.clearAllMocks());
@@ -106,5 +114,77 @@ describe("WorkspaceChats.updateFeedbackScore", () => {
       "resposta_confusa",
       "outro",
     ]);
+  });
+
+  it("stores an explicit traceId on create", async () => {
+    prisma.workspace_chats.create.mockResolvedValue({
+      id: 1,
+      traceId: TRACE_ID,
+    });
+
+    const result = await WorkspaceChats.new({
+      workspaceId: 1,
+      prompt: "Olá",
+      response: { text: "Oi" },
+      traceId: TRACE_ID,
+    });
+
+    expect(result.message).toBeNull();
+    expect(prisma.workspace_chats.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ traceId: TRACE_ID }),
+    });
+  });
+
+  it("derives traceId from the active OTel span when not provided", async () => {
+    getActiveTraceId.mockReturnValue(TRACE_ID);
+    prisma.workspace_chats.create.mockResolvedValue({
+      id: 2,
+      traceId: TRACE_ID,
+    });
+
+    await WorkspaceChats.new({
+      workspaceId: 1,
+      prompt: "Olá",
+      response: { text: "Oi" },
+    });
+
+    expect(getActiveTraceId).toHaveBeenCalled();
+    expect(prisma.workspace_chats.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ traceId: TRACE_ID }),
+    });
+  });
+
+  it("rejects an invalid traceId", async () => {
+    const result = await WorkspaceChats.new({
+      workspaceId: 1,
+      prompt: "Olá",
+      response: { text: "Oi" },
+      traceId: "not-a-trace-id",
+    });
+
+    expect(result.chat).toBeNull();
+    expect(result.message).toMatch(/32 hex/i);
+    expect(prisma.workspace_chats.create).not.toHaveBeenCalled();
+  });
+
+  it("persists traceId on upsert", async () => {
+    prisma.workspace_chats.upsert.mockResolvedValue({ chat: { id: 1 } });
+
+    const result = await WorkspaceChats.upsert(1, {
+      workspaceId: 1,
+      prompt: "Olá",
+      response: { text: "Oi" },
+      traceId: TRACE_ID,
+    });
+
+    expect(result.message).toBeNull();
+    expect(prisma.workspace_chats.upsert).toHaveBeenCalledWith({
+      where: { id: 1, user_id: null },
+      update: expect.objectContaining({ traceId: TRACE_ID }),
+      create: expect.objectContaining({
+        traceId: TRACE_ID,
+        prompt: "Olá",
+      }),
+    });
   });
 });

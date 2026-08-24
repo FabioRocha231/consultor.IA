@@ -204,6 +204,7 @@ function convertToChatHistory(history = []) {
       feedbackScore = null,
       feedbackCategory = null,
       feedbackComment = null,
+      traceId = null,
       id,
     } = record;
     const data = JSON.parse(response);
@@ -240,6 +241,7 @@ function convertToChatHistory(history = []) {
         feedbackScore,
         feedbackCategory,
         feedbackComment,
+        traceId,
         metrics: data?.metrics || {},
         ...(data?.outputs?.length > 0 ? { outputs: data.outputs } : {}),
         ...(data?.clarifyingQuestions?.length > 0
