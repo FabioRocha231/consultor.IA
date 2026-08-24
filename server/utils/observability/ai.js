@@ -143,6 +143,8 @@ function getInstruments() {
     documentIngestionFailures: meter.createCounter(
       "document_ingestion_failures_total"
     ),
+    feedbackPositive: meter.createCounter("feedback_positive_total"),
+    feedbackNegative: meter.createCounter("feedback_negative_total"),
     embeddingJobs: meter.createCounter("embedding_jobs_total"),
     embeddingJobsFailed: meter.createCounter("embedding_jobs_failed"),
     evalRuns: meter.createCounter("eval_runs_total"),
@@ -408,6 +410,15 @@ function recordFeedback({
   });
 }
 
+function recordFeedbackCounters({ score = null, category = null } = {}) {
+  if (isDisabled()) return;
+  if (score === null || score === undefined) return;
+  const instruments = getInstruments();
+  const labels = { category: category || "unspecified" };
+  if (score) instruments.feedbackPositive.add(1, labels);
+  else instruments.feedbackNegative.add(1, labels);
+}
+
 function recordEvalRun({ organization = null, status = "unknown" } = {}) {
   if (isDisabled()) return;
   const labels = { organization: String(organization || "unknown") };
@@ -443,6 +454,7 @@ module.exports = {
   recordDocumentIngestion,
   recordEmbeddingJob,
   recordFeedback,
+  recordFeedbackCounters,
   recordEvalRun,
   recordEvalQuestion,
   recordEvalLatency,

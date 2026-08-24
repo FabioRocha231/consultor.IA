@@ -606,14 +606,14 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "0",
+          "expr": "sum(increase(feedback_negative_total[24h])) / clamp_min(sum(increase(feedback_positive_total[24h])) + sum(increase(feedback_negative_total[24h])), 0.001)",
           "legendFormat": "{{organization}}",
           "range": false,
           "instant": true,
           "refId": "A"
         }
       ],
-      "title": "Feedback Positive Rate",
+      "title": "Feedback Negative Rate",
       "type": "table"
     },
     {

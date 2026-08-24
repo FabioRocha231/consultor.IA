@@ -55,10 +55,12 @@ const { ragConfigEndpoints } = require("./endpoints/ragConfig");
 const { feedbackEndpoints } = require("./endpoints/feedback");
 const { dashboardEndpoints } = require("./endpoints/dashboard");
 const { evalEndpoints } = require("./endpoints/eval");
+const { httpMetricsMiddleware } = require("./utils/middleware/httpMetrics");
 const app = express();
 const apiRouter = express.Router();
 const FILE_LIMIT = "3GB";
 
+app.use(httpMetricsMiddleware);
 app.use(requestContext);
 app.use(httpLogger());
 app.use(cors({ origin: true }));
