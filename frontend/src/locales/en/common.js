@@ -1,4 +1,9 @@
 const TRANSLATIONS = {
+  workspace: {
+    trace: {
+      view: "View trace",
+    },
+  },
   branding: {
     productName: "consultor.IA",
     tagline: "Set up your business AI in minutes",

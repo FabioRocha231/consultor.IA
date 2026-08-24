@@ -26,6 +26,7 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | Camada de configuração RAG | [ADR-008](../adr/008-rag-configuration-strategy.md) |
 | Política de logging sensível | [ADR-009](../adr/009-sensitive-logging-policy.md) |
 | Estratégia de sincronização upstream | [ADR-010](../adr/010-upstream-synchronization-strategy.md) |
+| Persistência de trace para correlação | [ADR-014](../adr/014-trace-persistence-strategy.md) |
 
 ## Índice
 
@@ -51,6 +52,7 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | [18-tech-debt.md](./18-tech-debt.md) | Registro de dívida técnica |
 | [19-risks.md](./19-risks.md) | Riscos principais |
 | [20-recommended-first-pr.md](./20-recommended-first-pr.md) | PR 01 detalhado |
+| [32-trace-persistence-runbook.md](./32-trace-persistence-runbook.md) | Correlação mensagem/feedback com traces |
 
 ## Convenção
 

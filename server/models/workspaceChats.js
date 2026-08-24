@@ -1,5 +1,8 @@
 const prisma = require("../utils/prisma");
 const { safeJSONStringify } = require("../utils/helpers/chat/responses");
+const { getActiveTraceId } = require("../utils/observability/ai");
+
+const TRACE_ID_PATTERN = /^[0-9a-f]{32}$/i;
 
 const VALID_FEEDBACK_CATEGORIES = [
   "informacao_incorreta",
@@ -8,6 +11,15 @@ const VALID_FEEDBACK_CATEGORIES = [
   "resposta_confusa",
   "outro",
 ];
+
+function normalizeTraceId(traceId = null) {
+  const candidate = traceId ?? getActiveTraceId();
+  if (candidate === null || candidate === undefined) return { value: null };
+  const value = String(candidate);
+  if (!TRACE_ID_PATTERN.test(value))
+    return { error: "Invalid traceId: expected 32 hex characters." };
+  return { value };
+}
 
 const WorkspaceChats = {
   new: async function ({
@@ -18,7 +30,11 @@ const WorkspaceChats = {
     threadId = null,
     include = true,
     apiSessionId = null,
+    traceId = null,
   }) {
+    const normalizedTraceId = normalizeTraceId(traceId);
+    if (normalizedTraceId.error)
+      return { chat: null, message: normalizedTraceId.error };
     try {
       const chat = await prisma.workspace_chats.create({
         data: {
@@ -29,6 +45,7 @@ const WorkspaceChats = {
           thread_id: threadId,
           api_session_id: apiSessionId,
           include,
+          traceId: normalizedTraceId.value,
         },
       });
       return { chat, message: null };
@@ -321,6 +338,12 @@ const WorkspaceChats = {
   _update: async function (id = null, data = {}) {
     if (!id) throw new Error("No workspace chat id provided for update");
 
+    if (Object.prototype.hasOwnProperty.call(data, "traceId")) {
+      const normalizedTraceId = normalizeTraceId(data.traceId);
+      if (normalizedTraceId.error) throw new Error(normalizedTraceId.error);
+      data.traceId = normalizedTraceId.value;
+    }
+
     try {
       await prisma.workspace_chats.update({
         where: { id },
@@ -364,8 +387,16 @@ const WorkspaceChats = {
     try {
       const createdChats = [];
       for (const chatData of chatsData) {
+        const normalizedTraceId = normalizeTraceId(chatData?.traceId);
+        if (normalizedTraceId.error)
+          return { chats: null, message: normalizedTraceId.error };
         const chat = await prisma.workspace_chats.create({
-          data: chatData,
+          data: {
+            ...chatData,
+            ...(normalizedTraceId.value
+              ? { traceId: normalizedTraceId.value }
+              : {}),
+          },
         });
         createdChats.push(chat);
       }
@@ -385,8 +416,13 @@ const WorkspaceChats = {
       threadId: null,
       include: true,
       apiSessionId: null,
+      traceId: null,
     }
   ) {
+    const normalizedTraceId = normalizeTraceId(data.traceId);
+    if (normalizedTraceId.error)
+      return { chat: null, message: normalizedTraceId.error };
+
     try {
       const payload = {
         workspaceId: data.workspaceId,
@@ -395,6 +431,9 @@ const WorkspaceChats = {
         thread_id: data.threadId,
         api_session_id: data.apiSessionId,
         include: data.include,
+        ...(normalizedTraceId.value
+          ? { traceId: normalizedTraceId.value }
+          : {}),
       };
 
       const { chat } = await prisma.workspace_chats.upsert({
