@@ -7,6 +7,7 @@ const {
 const { CollectorApi } = require("../utils/collectorApi");
 const { reqBody, multiUserMode, userFromSession } = require("../utils/http");
 const { validatedRequest } = require("../utils/middleware/validatedRequest");
+const { uploadLimiter } = require("../utils/middleware/rateLimit");
 const {
   flexUserRoleValid,
   ROLES,
@@ -78,7 +79,7 @@ function browserExtensionEndpoints(app) {
 
   app.post(
     "/browser-extension/embed-content",
-    [validBrowserExtensionApiKey],
+    [validBrowserExtensionApiKey, uploadLimiter],
     async (request, response) => {
       try {
         const { workspaceId, textContent, metadata } = reqBody(request);
@@ -124,7 +125,7 @@ function browserExtensionEndpoints(app) {
 
   app.post(
     "/browser-extension/upload-content",
-    [validBrowserExtensionApiKey],
+    [validBrowserExtensionApiKey, uploadLimiter],
     async (request, response) => {
       try {
         const { textContent, metadata } = reqBody(request);

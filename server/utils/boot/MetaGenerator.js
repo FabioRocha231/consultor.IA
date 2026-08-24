@@ -5,6 +5,11 @@
  * @property {string|null} content - Text content to be injected between tags. If null self-closing.
  */
 
+// Public deployment origin used by social sharing meta tags. Deployments should
+// set DEPLOYMENT_OG_URL to their public URL so previews never point at AnythingLLM.
+const DEPLOYMENT_OG_URL =
+  process.env.DEPLOYMENT_OG_URL || "https://consultor.IA";
+
 /**
  * This class serves the default index.html page that is not present when built in production.
  * and therefore this class should not be called when in development mode since it is unused.
@@ -81,7 +86,7 @@ class MetaGenerator {
       { tag: "meta", props: { property: "og:type", content: "website" } },
       {
         tag: "meta",
-        props: { property: "og:url", content: "https://anythingllm.com" },
+        props: { property: "og:url", content: DEPLOYMENT_OG_URL },
       },
       {
         tag: "meta",
@@ -113,7 +118,7 @@ class MetaGenerator {
       },
       {
         tag: "meta",
-        props: { property: "twitter:url", content: "https://anythingllm.com" },
+        props: { property: "twitter:url", content: DEPLOYMENT_OG_URL },
       },
       {
         tag: "meta",

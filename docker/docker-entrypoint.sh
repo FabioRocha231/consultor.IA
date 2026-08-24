@@ -22,6 +22,8 @@ fi
     export CHECKPOINT_DISABLE=1 &&
     npx prisma generate --schema=./prisma/schema.prisma &&
     npx prisma migrate deploy --schema=./prisma/schema.prisma &&
+    { npx prisma db seed --schema=./prisma/schema.prisma ||
+      echo "WARNING: prisma db seed failed; continuing without seed."; } &&
     node /app/server/index.js
 } &
 { node /app/collector/index.js; } &

@@ -1,5 +1,10 @@
 // Anything with "null" requires a translation. Contribute to translation via a PR!
 const TRANSLATIONS = {
+  workspace: {
+    trace: {
+      view: "View trace",
+    },
+  },
   branding: {
     productName: "consultor.IA",
     tagline: "Set up your business AI in minutes",
