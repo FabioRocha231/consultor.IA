@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "../..");
@@ -307,35 +307,52 @@ function parseArgs(argv) {
   const args = {
     json: false,
     network: false,
+    runtime: false,
     root: REPO_ROOT,
   };
   for (let index = 0; index < argv.length; index += 1) {
     if (argv[index] === "--json") args.json = true;
     else if (argv[index] === "--network") args.network = true;
+    else if (argv[index] === "--runtime") args.runtime = true;
     else if (argv[index] === "--root")
       args.root = path.resolve(argv[index + 1]);
   }
   return args;
 }
 
-function main() {
+async function main() {
   const args = parseArgs(process.argv.slice(2));
   const allowlist = loadJson(ALLOWLIST_PATH);
   const forbidden = loadJson(FORBIDDEN_PATH);
-  const result = args.network
-    ? scanNetwork(allowlist)
-    : scanStatic(args.root, forbidden);
-  result.findings.sort(
-    (a, b) => a.file.localeCompare(b.file) || Number(a.line) - Number(b.line)
-  );
+  let result;
+  if (args.runtime) {
+    const { runRuntimeEgressScan } = await import(
+      pathToFileURL(path.join(SCRIPTS_DIR, "privacy-egress-harness.mjs")).href
+    );
+    result = await runRuntimeEgressScan({ json: args.json });
+  } else {
+    result = args.network
+      ? scanNetwork(allowlist)
+      : scanStatic(args.root, forbidden);
+  }
+  if (!args.runtime)
+    result.findings.sort(
+      (a, b) => a.file.localeCompare(b.file) || Number(a.line) - Number(b.line)
+    );
 
   const output = {
     ok: result.findings.length === 0,
-    mode: args.network ? "network" : "static",
+    mode: args.runtime ? "runtime" : args.network ? "network" : "static",
     findings: result.findings,
-    scanned: result.scanned,
+    scanned: args.runtime ? result.workflows?.length : result.scanned,
   };
   if (args.network) output.attempts = result.attempts;
+  if (args.runtime) {
+    output.workflows = result.workflows;
+    output.egress = result.egress;
+    output.serverPort = result.serverPort;
+    output.allowlist = result.allowlist;
+  }
 
   if (args.json) {
     console.log(JSON.stringify(output, null, 2));
