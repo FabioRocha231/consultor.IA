@@ -14,7 +14,8 @@
     "start": "cross-env NODE_ENV=production node index.js",
     "lint": "eslint --fix .",
     "lint:check": "eslint .",
-    "swagger": "node ./swagger/init.js"
+    "swagger": "node ./swagger/init.js",
+    "eval:live": "node scripts/eval-live.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -68,6 +69,7 @@
     "elevenlabs": "^0.5.0",
     "exceljs": "4.4.0",
     "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
     "extract-json-from-string": "^1.0.1",
     "fast-levenshtein": "^3.0.0",
     "fix-path": "^4.0.0",

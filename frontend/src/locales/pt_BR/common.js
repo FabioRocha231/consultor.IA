@@ -1,5 +1,10 @@
 // Anything with "null" requires a translation. Contribute to translation via a PR!
 const TRANSLATIONS = {
+  workspace: {
+    trace: {
+      view: "Ver trace",
+    },
+  },
   branding: {
     productName: "consultor.IA",
     tagline: "Configure sua IA de empresa em minutos",
@@ -68,6 +73,33 @@ const TRANSLATIONS = {
       citationCorrectness: "Correção da citação",
       avgLatencyMs: "Latência média (ms)",
       totalCostUsd: "Custo total (USD)",
+    },
+    live: {
+      title: "Avaliação ao vivo",
+      description:
+        "Rode retrieval RAG real e respostas de LLM contra um dataset preparado.",
+      back: "Voltar para avaliação",
+      companyFilter: "Empresa / slug do workspace",
+      company: "Empresa / slug do workspace",
+      companyPlaceholder: "ex.: restaurante-a",
+      empty: "Nenhum dataset corresponde a esta empresa.",
+      selectDataset: "Selecione um dataset para rodar ao vivo.",
+      run: "Rodar ao vivo",
+      running: "Rodando avaliação ao vivo...",
+      confirm: "Isso vai consumir tokens do provider de LLM. Continuar?",
+      topK: "Top K",
+      threshold: "Limiar de similaridade",
+      results: "Resultados da execução ao vivo",
+      latencyP50: "Latência P50 (ms)",
+      latencyP95: "Latência P95 (ms)",
+      totalCost: "Custo total (USD)",
+      totalTokens: "Total de tokens",
+      status: {
+        pending: "Pendente",
+        running: "Executando",
+        completed: "Concluído",
+        failed: "Falhou",
+      },
     },
   },
   dashboard: {
@@ -164,32 +196,32 @@ const TRANSLATIONS = {
       "Sua empresa fica publicada e a IA passa a ser usada no dia a dia.",
     publishIncomplete: "Complete as etapas 1 a 4 antes de publicar.",
     step: {
-      1: {
+      "1": {
         title: "Configurar Empresa",
         description: "Comece com o nome e a identidade da sua empresa.",
       },
-      2: {
+      "2": {
         title: "Qual o segmento?",
         description: "Escolha a área principal da sua empresa.",
       },
-      3: {
+      "3": {
         title: "Qual o objetivo da IA?",
         description: "O que a IA deve ajudar a alcançar?",
       },
-      4: {
+      "4": {
         title: "Adicionar conhecimento",
         description:
           "Envie documentos, links ou textos que a IA deve conhecer.",
       },
-      5: {
+      "5": {
         title: "Definir comportamento",
         description: "Como a IA deve se comunicar com seus clientes?",
       },
-      6: {
+      "6": {
         title: "Testar",
         description: "Experimente uma resposta antes de publicar.",
       },
-      7: {
+      "7": {
         title: "Publicar",
         description: "Confirme e coloque sua empresa no ar.",
       },

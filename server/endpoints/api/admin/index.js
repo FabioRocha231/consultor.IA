@@ -8,9 +8,11 @@ const { WorkspaceUser } = require("../../../models/workspaceUsers");
 const { canModifyAdmin } = require("../../../utils/helpers/admin");
 const { multiUserMode, reqBody } = require("../../../utils/http");
 const { validApiKey } = require("../../../utils/middleware/validApiKey");
+const { sensitiveDebugAdminEndpoints } = require("./sensitiveDebug");
 
 function apiAdminEndpoints(app) {
   if (!app) return;
+  sensitiveDebugAdminEndpoints(app);
 
   app.get("/v1/admin/is-multi-user-mode", [validApiKey], (_, response) => {
     /*

@@ -1,0 +1,15 @@
+{
+  "_comment": "Runtime allowlist for the egress harness. Deployments should additionally restrict outbound traffic with DEPLOYMENT_EGRESS_DOMAINS and deny-by-default at the edge.",
+  "domains": [
+    "localhost",
+    "127.0.0.1",
+    "0.0.0.0",
+    "api.openai.com",
+    "api.deepseek.com",
+    "generativelanguage.googleapis.com",
+    "api.mistral.ai",
+    "api.cohere.ai",
+    "openrouter.ai"
+  ],
+  "wildcards": []
+}

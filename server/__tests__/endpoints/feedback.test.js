@@ -54,6 +54,7 @@ const chat = {
   feedbackScore: false,
   feedbackCategory: "informacao_incorreta",
   feedbackComment: "O horario mudou.",
+  traceId: "0123456789abcdef0123456789abcdef",
   feedbackAt: new Date("2026-08-23T12:00:00.000Z"),
 };
 
@@ -83,6 +84,7 @@ describe("feedback endpoints", () => {
       score: false,
       category: "informacao_incorreta",
       comment: "O horario mudou.",
+      traceId: "0123456789abcdef0123456789abcdef",
       ragConfig: { topK: 4, similarityThreshold: 0.25 },
     });
     expect(prisma.workspace_chats.findMany).toHaveBeenCalledWith(

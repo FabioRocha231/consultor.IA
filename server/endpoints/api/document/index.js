@@ -1,5 +1,6 @@
 const { validApiKey } = require("../../../utils/middleware/validApiKey");
 const { handleAPIFileUpload } = require("../../../utils/files/multer");
+const { uploadLimiter } = require("../../../utils/middleware/rateLimit");
 const {
   findDocumentInDocuments,
   getDocumentsByFolder,
@@ -48,7 +49,12 @@ function apiDocumentEndpoints(app) {
 
   app.post(
     "/v1/document/upload",
-    [validApiKey, handleAPIFileUpload, validateWorkspaceSlugQuery],
+    [
+      validApiKey,
+      uploadLimiter,
+      handleAPIFileUpload,
+      validateWorkspaceSlugQuery,
+    ],
     async (request, response) => {
       /*
     #swagger.tags = ['Documents']
@@ -172,7 +178,12 @@ function apiDocumentEndpoints(app) {
 
   app.post(
     "/v1/document/upload/:folderName",
-    [validApiKey, handleAPIFileUpload, validateWorkspaceSlugQuery],
+    [
+      validApiKey,
+      uploadLimiter,
+      handleAPIFileUpload,
+      validateWorkspaceSlugQuery,
+    ],
     async (request, response) => {
       /*
       #swagger.tags = ['Documents']
@@ -320,7 +331,7 @@ function apiDocumentEndpoints(app) {
 
   app.post(
     "/v1/document/upload-link",
-    [validApiKey, validateWorkspaceSlugQuery],
+    [validApiKey, uploadLimiter, validateWorkspaceSlugQuery],
     async (request, response) => {
       /*
     #swagger.tags = ['Documents']
@@ -443,7 +454,7 @@ function apiDocumentEndpoints(app) {
 
   app.post(
     "/v1/document/raw-text",
-    [validApiKey, validateWorkspaceSlugQuery],
+    [validApiKey, uploadLimiter, validateWorkspaceSlugQuery],
     async (request, response) => {
       /*
      #swagger.tags = ['Documents']

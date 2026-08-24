@@ -10,6 +10,7 @@ const {
 } = require("../../../utils/chats/openaiCompatible");
 const { extractTextContent, extractAttachments } = require("./helpers");
 const { handleImageGenUpload } = require("../../../utils/files/multer");
+const { chatLimiter } = require("../../../utils/middleware/rateLimit");
 
 function apiOpenAICompatibleEndpoints(app) {
   if (!app) return;
@@ -73,7 +74,7 @@ function apiOpenAICompatibleEndpoints(app) {
 
   app.post(
     "/v1/openai/chat/completions",
-    [validApiKey],
+    [validApiKey, chatLimiter],
     async (request, response) => {
       /*
       #swagger.tags = ['OpenAI Compatible Endpoints']

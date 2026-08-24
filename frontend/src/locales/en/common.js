@@ -1,4 +1,9 @@
 const TRANSLATIONS = {
+  workspace: {
+    trace: {
+      view: "View trace",
+    },
+  },
   branding: {
     productName: "consultor.IA",
     tagline: "Set up your business AI in minutes",
@@ -67,6 +72,33 @@ const TRANSLATIONS = {
       citationCorrectness: "Citation correctness",
       avgLatencyMs: "Average latency (ms)",
       totalCostUsd: "Total cost (USD)",
+    },
+    live: {
+      title: "Live evaluation",
+      description:
+        "Run real RAG retrieval and LLM answers against a prepared dataset.",
+      back: "Back to evaluation",
+      companyFilter: "Company / workspace slug",
+      company: "Company / workspace slug",
+      companyPlaceholder: "e.g. restaurante-a",
+      empty: "No datasets match this company.",
+      selectDataset: "Select a dataset to run live.",
+      run: "Run live",
+      running: "Running live evaluation...",
+      confirm: "This will consume tokens from the LLM provider. Continue?",
+      topK: "Top K",
+      threshold: "Similarity threshold",
+      results: "Live run results",
+      latencyP50: "Latency P50 (ms)",
+      latencyP95: "Latency P95 (ms)",
+      totalCost: "Total cost (USD)",
+      totalTokens: "Total tokens",
+      status: {
+        pending: "Pending",
+        running: "Running",
+        completed: "Completed",
+        failed: "Failed",
+      },
     },
   },
   dashboard: {

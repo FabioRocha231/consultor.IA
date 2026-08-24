@@ -26,6 +26,9 @@ jest.mock("../../models/evalRun", () => ({
   },
   EvalResult: {},
 }));
+jest.mock("../../models/eventLogs", () => ({
+  EventLogs: { logEvent: jest.fn() },
+}));
 jest.mock("../../utils/evalRunner", () => ({
   runEval: jest.fn(),
 }));
@@ -33,8 +36,13 @@ jest.mock("../../utils/evalRunner", () => ({
 const { Organization } = require("../../models/organization");
 const { EvalDataset, EvalQuestion } = require("../../models/evalDataset");
 const { EvalRun } = require("../../models/evalRun");
+const { EventLogs } = require("../../models/eventLogs");
 const { runEval } = require("../../utils/evalRunner");
-const { evalEndpoints, evalRoleGuard } = require("../../endpoints/eval");
+const {
+  evalEndpoints,
+  evalRoleGuard,
+  liveEvalAdminGuard,
+} = require("../../endpoints/eval");
 
 const organization = { id: "org-1", slug: "default", ragConfig: null };
 const dataset = {
@@ -80,7 +88,14 @@ function mockResponse() {
 }
 
 describe("eval endpoints", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env.EVAL_LIVE = "false";
+  });
+
+  afterAll(() => {
+    delete process.env.EVAL_LIVE;
+  });
 
   test("lists datasets paginated", async () => {
     Organization.getBySlug.mockResolvedValue(organization);
@@ -110,6 +125,7 @@ describe("eval endpoints", () => {
     expect(EvalDataset.create).toHaveBeenCalledWith({
       name: "Cardápio Q&A",
       description: undefined,
+      company: undefined,
       organizationId: "org-1",
       questions: [],
     });
@@ -185,6 +201,103 @@ describe("eval endpoints", () => {
     });
   });
 
+  test("live endpoint rejects when EVAL_LIVE is disabled", async () => {
+    const handlers = registerEndpoints();
+    const response = mockResponse();
+
+    await handlers["POST /eval/live"](
+      { body: { datasetId: "dataset-1" } },
+      response
+    );
+
+    expect(response.status).toHaveBeenCalledWith(403);
+    expect(response.body.error).toContain("EVAL_LIVE=true");
+    expect(EvalRun.create).not.toHaveBeenCalled();
+  });
+
+  test("live endpoint starts a run and writes an audit log when enabled", async () => {
+    process.env.EVAL_LIVE = "true";
+    Organization.getBySlug.mockResolvedValue(organization);
+    EvalDataset.get.mockResolvedValue({
+      ...dataset,
+      company: "restaurante-a",
+    });
+    EvalRun.create.mockResolvedValue({ run, error: null });
+    runEval.mockResolvedValue({ ok: true });
+    const handlers = registerEndpoints();
+    const response = mockResponse();
+
+    await handlers["POST /eval/live"](
+      {
+        body: { datasetId: "dataset-1", configOverrides: { topK: 2 } },
+      },
+      response
+    );
+
+    expect(response.status).toHaveBeenCalledWith(202);
+    expect(EvalRun.create).toHaveBeenCalledWith({
+      datasetId: "dataset-1",
+      organizationId: "org-1",
+      configSnapshot: expect.objectContaining({
+        mode: "live",
+        company: "restaurante-a",
+      }),
+    });
+    expect(runEval).toHaveBeenCalledWith({
+      runId: "run-1",
+      config: expect.objectContaining({ topK: 2, mode: "live" }),
+      mode: "live",
+    });
+    expect(EventLogs.logEvent).toHaveBeenCalledWith(
+      "rag_eval.live_run",
+      expect.objectContaining({
+        dataset_id: "dataset-1",
+        run_id: "run-1",
+        company: "restaurante-a",
+      }),
+      null
+    );
+  });
+
+  test("live endpoint rejects invalid config overrides", async () => {
+    process.env.EVAL_LIVE = "true";
+    Organization.getBySlug.mockResolvedValue(organization);
+    EvalDataset.get.mockResolvedValue(dataset);
+    const handlers = registerEndpoints();
+    const response = mockResponse();
+
+    await handlers["POST /eval/live"](
+      {
+        body: {
+          datasetId: "dataset-1",
+          configOverrides: { topK: -1 },
+        },
+      },
+      response
+    );
+
+    expect(response.status).toHaveBeenCalledWith(400);
+    expect(EvalRun.create).not.toHaveBeenCalled();
+  });
+
+  test("live run results are admin-only", async () => {
+    EvalRun.get.mockResolvedValue({
+      ...run,
+      configSnapshot: { mode: "live" },
+      results: [],
+    });
+    const handlers = registerEndpoints();
+    const response = mockResponse();
+    response.locals = {
+      multiUserMode: true,
+      user: { role: "manager" },
+    };
+
+    await handlers["GET /eval/runs/:id"]({ params: { id: "run-1" } }, response);
+
+    expect(response.status).toHaveBeenCalledWith(403);
+  });
+
   test("lists runs for a dataset", async () => {
     Organization.getBySlug.mockResolvedValue(organization);
     EvalRun.list.mockResolvedValue({ runs: [run], total: 1 });
@@ -230,6 +343,19 @@ describe("eval endpoints", () => {
     const allowed = mockResponse();
     allowed.locals = { multiUserMode: true, user: { role: "manager" } };
     await evalRoleGuard({}, allowed, next);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  test("live eval guard allows admin and blocks manager in multi-user mode", async () => {
+    const next = jest.fn();
+    const denied = mockResponse();
+    denied.locals = { multiUserMode: true, user: { role: "manager" } };
+    await liveEvalAdminGuard({}, denied, next);
+    expect(denied.status).toHaveBeenCalledWith(403);
+
+    const allowed = mockResponse();
+    allowed.locals = { multiUserMode: true, user: { role: "admin" } };
+    await liveEvalAdminGuard({}, allowed, next);
     expect(next).toHaveBeenCalledTimes(1);
   });
 });
