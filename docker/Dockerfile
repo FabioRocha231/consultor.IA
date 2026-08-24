@@ -4,8 +4,16 @@ FROM ubuntu:noble-20251013 AS base
 # Build arguments
 ARG ARG_UID=1000
 ARG ARG_GID=1000
+# Chromium ARM64 pin (shared with cloud-deployments/openshift/Dockerfile)
+ARG CHROMIUM_BASE_URL=https://cdn.playwright.dev/dbazure/download/playwright/builds/chromium
+ARG CHROMIUM_BUILD_ID=1234
+ARG CHROMIUM_SHA256=b5ad7d8fe70f230b34198ddb5626d717c016db2f627cb44b922babbcaf3479b9
 
 FROM base AS build-arm64
+# Re-declare Chromium ARGs in this stage so the values are available to RUN.
+ARG CHROMIUM_BASE_URL
+ARG CHROMIUM_BUILD_ID
+ARG CHROMIUM_SHA256
 RUN echo "Preparing build of AnythingLLM image for arm64 architecture"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -62,7 +70,9 @@ WORKDIR /app
 # so web-scraping would be broken in arm docker containers unless we patch it
 # by manually installing a compatible chromedriver.
 RUN echo "Need to patch Puppeteer x Chromium support for ARM86 - installing dep!" && \
-    curl -fSL https://webassets.anythingllm.com/chromium-1088-linux-arm64.zip -o chrome-linux.zip && \
+    set -eux && \
+    curl -fSL --retry 3 "${CHROMIUM_BASE_URL}/${CHROMIUM_BUILD_ID}/chromium-linux-arm64.zip" -o chrome-linux.zip && \
+    echo "${CHROMIUM_SHA256}  chrome-linux.zip" | sha256sum -c - && \
     unzip chrome-linux.zip && \
     rm -rf chrome-linux.zip
 
