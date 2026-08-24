@@ -16,6 +16,7 @@ const {
   writeResponseChunk,
 } = require("../../../utils/helpers/chat/responses");
 const { ApiChatHandler } = require("../../../utils/chats/apiChatHandler");
+const { chatLimiter } = require("../../../utils/middleware/rateLimit");
 const {
   workspaceDeletionProtection,
 } = require("../../../utils/middleware/workspaceDeletionProtection");
@@ -591,7 +592,7 @@ function apiWorkspaceEndpoints(app) {
 
   app.post(
     "/v1/workspace/:slug/chat",
-    [validApiKey],
+    [validApiKey, chatLimiter],
     async (request, response) => {
       /*
    #swagger.tags = ['Workspaces']

@@ -15,6 +15,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
         unzip curl gnupg libgfortran5 libgbm1 tzdata netcat-openbsd \
+        postgresql-client jq \
         libasound2t64 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 \
         libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libx11-6 libx11-xcb1 libxcb1 \
         libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 \
@@ -84,6 +85,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
         curl gnupg libgfortran5 libgbm1 tzdata netcat-openbsd \
+        postgresql-client jq \
         libasound2t64 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 \
         libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libx11-6 libx11-xcb1 libxcb1 \
         libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 \
@@ -117,11 +119,13 @@ RUN (getent passwd "$ARG_UID" && userdel -f "$(getent passwd "$ARG_UID" | cut -d
 # Copy docker helper scripts
 COPY ./docker/docker-entrypoint.sh /usr/local/bin/
 COPY ./docker/docker-healthcheck.sh /usr/local/bin/
+COPY ./docker/scripts/ /app/scripts/
 COPY --chown=anythingllm:anythingllm ./docker/.env.example /app/server/.env
 
 # Ensure the scripts are executable
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh && \
-    chmod +x /usr/local/bin/docker-healthcheck.sh
+    chmod +x /usr/local/bin/docker-healthcheck.sh && \
+    chmod +x /app/scripts/*.sh
 
 #############################################
 # COMMON BUILD FLOW FOR ALL ARCHS
