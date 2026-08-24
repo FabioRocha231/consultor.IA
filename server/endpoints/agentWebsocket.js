@@ -6,6 +6,10 @@ const {
   WEBSOCKET_BAIL_COMMANDS,
 } = require("../utils/agents/aibitat/plugins/websocket");
 const { safeJsonParse } = require("../utils/http");
+const {
+  agentLimiter,
+  allowWebSocketRateLimit,
+} = require("../utils/middleware/rateLimit");
 
 // Setup listener for incoming messages to relay to socket so it can be handled by agent plugin.
 function relayToSocket(message) {
@@ -23,6 +27,7 @@ function agentWebsocket(app) {
   if (!app) return;
 
   app.ws("/agent-invocation/:uuid", async function (socket, request) {
+    if (!(await allowWebSocketRateLimit(agentLimiter, socket, request))) return;
     try {
       const agentHandler = await new AgentHandler({
         uuid: String(request.params.uuid),

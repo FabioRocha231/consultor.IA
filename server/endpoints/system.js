@@ -28,6 +28,7 @@ const { v4 } = require("uuid");
 const { SystemSettings } = require("../models/systemSettings");
 const { User } = require("../models/user");
 const { validatedRequest } = require("../utils/middleware/validatedRequest");
+const { loginLimiter } = require("../utils/middleware/rateLimit");
 const fs = require("fs");
 const path = require("path");
 const {
@@ -192,7 +193,7 @@ function systemEndpoints(app) {
     }
   );
 
-  app.post("/request-token", async (request, response) => {
+  app.post("/request-token", [loginLimiter], async (request, response) => {
     try {
       const bcrypt = require("bcryptjs");
 
@@ -340,7 +341,7 @@ function systemEndpoints(app) {
 
   app.get(
     "/request-token/sso/simple",
-    [simpleSSOEnabled],
+    [loginLimiter, simpleSSOEnabled],
     async (request, response) => {
       const { token: tempAuthToken } = request.query;
       const { sessionToken, token, error } =

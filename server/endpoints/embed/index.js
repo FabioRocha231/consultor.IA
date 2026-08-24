@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require("uuid");
 const { reqBody } = require("../../utils/http");
 const { streamChatWithForEmbed } = require("../../utils/chats/embed");
 const { EmbedChats } = require("../../models/embedChats");
+const { embedLimiter } = require("../../utils/middleware/rateLimit");
 const {
   validEmbedConfig,
   canRespond,
@@ -17,7 +18,7 @@ function embeddedEndpoints(app) {
 
   app.post(
     "/embed/:embedId/stream-chat",
-    [validEmbedConfig, setConnectionMeta, canRespond],
+    [validEmbedConfig, setConnectionMeta, canRespond, embedLimiter],
     async (request, response) => {
       try {
         const embed = response.locals.embedConfig;
