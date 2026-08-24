@@ -54,6 +54,7 @@ describe("evalDataset model", () => {
       data: {
         name: "Cardápio Q&A",
         description: "Perguntas sobre o cardápio",
+        company: null,
         organizationId: "org-1",
         questions: {
           create: [

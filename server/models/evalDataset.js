@@ -29,6 +29,7 @@ const EvalDataset = {
   create: async function ({
     name,
     description = null,
+    company = null,
     organizationId = null,
     questions = [],
   } = {}) {
@@ -46,6 +47,10 @@ const EvalDataset = {
               description === undefined || description === null
                 ? null
                 : String(description).slice(0, 2000),
+            company:
+              company === undefined || company === null
+                ? null
+                : String(company).slice(0, 255),
             organizationId,
             questions: { create: normalizedQuestions },
           },
@@ -72,9 +77,16 @@ const EvalDataset = {
     }
   },
 
-  list: async function ({ organizationId, limit = 50, offset = 0 } = {}) {
+  list: async function ({
+    organizationId,
+    company,
+    limit = 50,
+    offset = 0,
+  } = {}) {
     try {
-      const where = organizationId ? { organizationId } : {};
+      const where = {};
+      if (organizationId) where.organizationId = organizationId;
+      if (company) where.company = company;
       const [total, datasets] = await Promise.all([
         prisma.eval_dataset.count({ where }),
         prisma.eval_dataset.findMany({
