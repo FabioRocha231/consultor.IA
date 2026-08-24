@@ -264,7 +264,11 @@ model workspace_chats {
   feedbackComment  String?
   feedbackAt       DateTime?
   memoryProcessed Boolean? @map("memory_processed")
+  traceId         String?
   users           users?   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([workspaceId, createdAt])
+  @@index([traceId])
 }
 
 model workspace_agent_invocations {

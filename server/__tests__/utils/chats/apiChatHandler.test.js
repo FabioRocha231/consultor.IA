@@ -42,6 +42,11 @@ jest.mock("../../../utils/chats/index", () => ({
   recentChatHistory: jest.fn(),
   grepAllSlashCommands: jest.fn(async (message) => message),
 }));
+jest.mock("../../../utils/observability/ai", () => ({
+  getActiveTraceId: jest.fn(),
+  recordLlmCall: jest.fn(),
+  withSpan: jest.fn((_name, fn) => fn()),
+}));
 jest.mock("../../../utils/helpers", () => ({
   getVectorDbClass: jest.fn(),
   resolveProviderConnector: jest.fn(),
@@ -94,13 +99,12 @@ jest.mock("../../../utils/agents/ephemeral", () => {
 const { ApiChatHandler } = require("../../../utils/chats/apiChatHandler");
 const { WorkspaceChats } = require("../../../models/workspaceChats");
 const { Organization } = require("../../../models/organization");
-const {
-  writeResponseChunk,
-} = require("../../../utils/helpers/chat/responses");
+const { writeResponseChunk } = require("../../../utils/helpers/chat/responses");
 const {
   EphemeralAgentHandler,
   __mocks: ephemeralMocks,
 } = require("../../../utils/agents/ephemeral");
+const { getActiveTraceId } = require("../../../utils/observability/ai");
 
 const workspace = { id: 1, slug: "workspace", chatMode: "chat" };
 const attachments = [
@@ -173,6 +177,7 @@ function expectedSavePayload({ user, thread, sessionId }) {
     include: true,
     threadId: thread?.id || null,
     apiSessionId: sessionId,
+    traceId: expect.stringMatching(/^[0-9a-f]{32}$/),
     user,
     response: expect.objectContaining({
       text: agentResult.textResponse,
@@ -187,6 +192,7 @@ function expectedSavePayload({ user, thread, sessionId }) {
 describe("ApiChatHandler @agent persistence", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getActiveTraceId.mockReturnValue("0123456789abcdef0123456789abcdef");
     Organization.getBySlug.mockResolvedValue(null);
     Organization.all.mockResolvedValue([]);
     EphemeralAgentHandler.isAgentInvocation.mockResolvedValue(true);
@@ -271,9 +277,7 @@ describe("ApiChatHandler @agent persistence", () => {
           attachments,
         });
       }
-      expect(WorkspaceChats.new).toHaveBeenCalledTimes(
-        REAL_WORLD_CASES.length
-      );
+      expect(WorkspaceChats.new).toHaveBeenCalledTimes(REAL_WORLD_CASES.length);
       for (const call of WorkspaceChats.new.mock.calls) {
         expect(call[0].include).toBe(true);
       }

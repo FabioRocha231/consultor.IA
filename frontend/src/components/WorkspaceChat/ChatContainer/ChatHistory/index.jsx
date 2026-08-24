@@ -317,6 +317,7 @@ function buildMessages({
           feedbackScore={props.feedbackScore}
           feedbackCategory={props.feedbackCategory}
           feedbackComment={props.feedbackComment}
+          traceId={props.traceId}
           chatId={props.chatId}
           error={props.error}
           attachments={props.attachments}
