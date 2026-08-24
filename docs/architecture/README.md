@@ -28,13 +28,11 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | Estratégia de sincronização upstream | [ADR-010](../adr/010-upstream-synchronization-strategy.md) |
 | Persistência de trace para correlação | [ADR-014](../adr/014-trace-persistence-strategy.md) |
 | Política de egress runtime | [ADR-011](../adr/011-runtime-egress-policy.md) |
-| Política de egress runtime | [ADR-011](../adr/011-runtime-egress-policy.md) |
-| Persistência de trace para correlação | [ADR-014](../adr/014-trace-persistence-strategy.md) |
+| Backup e disaster recovery | [ADR-012](../adr/012-backup-and-disaster-recovery.md) |
 
 ## Índice
 
 | Doc | Conteúdo |
-| --- | --- |
 | [01-current-architecture-map.md](./01-current-architecture-map.md) | Mapa dos componentes atuais com decisão e evidência |
 | [02-zero-telemetry-audit.md](./02-zero-telemetry-audit.md) | Auditoria de telemetria/analytics/outbound |
 | [03-gap-analysis.md](./03-gap-analysis.md) | Requisitos x capacidade atual |
@@ -66,20 +64,7 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | [27-revised-pr-roadmap.md](./27-revised-pr-roadmap.md) | Roadmap pós-MVP (PR 14-25) |
 | [28-first-pr-plan-runtime-egress-audit.md](./28-first-pr-plan-runtime-egress-audit.md) | Plano detalhado do PR 14 |
 | [30-vendored-components-decision.md](./30-vendored-components-decision.md) | Decisão: browser-extension fora do build e hardening do embed |
-| [30-vendored-components-decision.md](./30-vendored-components-decision.md) | Decisão: browser-extension fora do build e hardening do embed |
-| [30-vendored-components-decision.md](./30-vendored-components-decision.md) | Decisão: browser-extension fora do build e hardening do embed |
-| [31-admin-bootstrap-runbook.md](./31-admin-bootstrap-runbook.md) | Bootstrap do primeiro admin em um novo deployment |
-| [21-privacy-ci-gate.md](./21-privacy-ci-gate.md) | Privacy CI Gate (estático + network + dependency) |
-| [22-embed-audit.md](./22-embed-audit.md) | Auditoria do componente `embed/` |
-| [23-browser-extension-audit.md](./23-browser-extension-audit.md) | Auditoria do componente `browser-extension/` |
-| [24-runtime-egress-map.md](./24-runtime-egress-map.md) | Mapa de egress do `server/` e `collector/` |
-| [25-current-master-verification.md](./25-current-master-verification.md) | Verificação do master pós-MVP |
-| [26-production-readiness-gap-analysis.md](./26-production-readiness-gap-analysis.md) | Gap analysis para piloto |
-| [27-revised-pr-roadmap.md](./27-revised-pr-roadmap.md) | Roadmap pós-MVP (PR 14-25) |
-| [28-first-pr-plan-runtime-egress-audit.md](./28-first-pr-plan-runtime-egress-audit.md) | Plano detalhado do PR 14 |
-| [30-vendored-components-decision.md](./30-vendored-components-decision.md) | Decisão: browser-extension fora do build e hardening do embed |
-| [31-admin-bootstrap-runbook.md](./31-admin-bootstrap-runbook.md) | Bootstrap do primeiro admin em um novo deployment |
-| [32-trace-persistence-runbook.md](./32-trace-persistence-runbook.md) | Correlação mensagem/feedback com traces |
+| [33-backup-restore-runbook.md](./33-backup-restore-runbook.md) | Backup/restore de Postgres, Qdrant e storage |
 
 ## Convenção
 

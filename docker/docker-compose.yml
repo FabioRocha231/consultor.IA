@@ -18,6 +18,7 @@ services:
     volumes:
       - "./.env:/app/server/.env"
       - "../server/storage:/app/server/storage"
+      - "../backups:/var/backups/consultor-ia"
       - "../collector/hotdir/:/app/collector/hotdir"
       - "../collector/outputs/:/app/collector/outputs"
     user: "${UID:-1000}:${GID:-1000}"
