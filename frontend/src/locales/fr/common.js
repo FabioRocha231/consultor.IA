@@ -69,8 +69,33 @@ const TRANSLATIONS = {
       avgLatencyMs: "Average latency (ms)",
       totalCostUsd: "Total cost (USD)",
     },
+    live: {
+      title: null,
+      description: null,
+      back: null,
+      companyFilter: null,
+      company: null,
+      companyPlaceholder: null,
+      empty: null,
+      selectDataset: null,
+      run: null,
+      running: null,
+      confirm: null,
+      topK: null,
+      threshold: null,
+      results: null,
+      latencyP50: null,
+      latencyP95: null,
+      totalCost: null,
+      totalTokens: null,
+      status: {
+        pending: null,
+        running: null,
+        completed: null,
+        failed: null,
+      },
+    },
   },
-
   dashboard: {
     title: "Dashboard",
     periodLabel: "Period",
@@ -135,7 +160,6 @@ const TRANSLATIONS = {
       modelPricingVersion: "Model pricing version",
     },
   },
-
   feedback: {
     thanks: "Thank you for your feedback!",
     title: "What went wrong with this response?",
@@ -154,7 +178,6 @@ const TRANSLATIONS = {
       outro: "Other",
     },
   },
-
   onboarding: {
     survey: {
       email: "Adresse e-mail",

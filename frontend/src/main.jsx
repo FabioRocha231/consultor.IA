@@ -347,6 +347,15 @@ const router = createBrowserRouter([
           return { element: <ManagerRoute Component={Eval} /> };
         },
       },
+      {
+        path: "/eval/live",
+        lazy: async () => {
+          const { default: LiveRunner } = await import(
+            "@/pages/Eval/LiveRunner"
+          );
+          return { element: <AdminRoute Component={LiveRunner} /> };
+        },
+      },
       // Onboarding Flow
       {
         path: "/onboarding",

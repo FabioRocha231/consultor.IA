@@ -29,6 +29,9 @@ export default {
   eval: () => {
     return "/eval";
   },
+  liveEval: () => {
+    return "/eval/live";
+  },
   login: (noTry = false) => {
     return `/login${noTry ? "?nt=1" : ""}`;
   },
