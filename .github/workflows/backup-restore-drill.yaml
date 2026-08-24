@@ -159,7 +159,7 @@ jobs:
             echo "Postgres counts: ${POSTGRES_COUNTS}"
             echo "Qdrant points: ${POINTS_COUNT}"
             echo "Storage file: restored"
-          } > "$GITHUB_WORKSPACE/backup-restore-report.txt"
+          } > "/tmp/backup-restore-report.txt"
 
       - name: Run ShellCheck
         run: shellcheck docker/scripts/backup.sh docker/scripts/restore.sh docker/scripts/test-backup-restore.sh
@@ -168,5 +168,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backup-restore-drill-report
-          path: ${{ env.GITHUB_WORKSPACE }}/backup-restore-report.txt
+          path: /tmp/backup-restore-report.txt
           if-no-files-found: error
