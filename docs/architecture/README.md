@@ -51,6 +51,7 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | [18-tech-debt.md](./18-tech-debt.md) | Registro de dívida técnica |
 | [19-risks.md](./19-risks.md) | Riscos principais |
 | [20-recommended-first-pr.md](./20-recommended-first-pr.md) | PR 01 detalhado |
+| [36-sensitive-debug-runbook.md](./36-sensitive-debug-runbook.md) | Sensitive Debug Mode: ativação, TTL, redação e audit |
 
 ## Convenção
 
