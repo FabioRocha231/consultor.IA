@@ -26,6 +26,7 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | Camada de configuração RAG | [ADR-008](../adr/008-rag-configuration-strategy.md) |
 | Política de logging sensível | [ADR-009](../adr/009-sensitive-logging-policy.md) |
 | Estratégia de sincronização upstream | [ADR-010](../adr/010-upstream-synchronization-strategy.md) |
+| Backup e disaster recovery | [ADR-012](../adr/012-backup-and-disaster-recovery.md) |
 
 ## Índice
 
@@ -51,6 +52,7 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | [18-tech-debt.md](./18-tech-debt.md) | Registro de dívida técnica |
 | [19-risks.md](./19-risks.md) | Riscos principais |
 | [20-recommended-first-pr.md](./20-recommended-first-pr.md) | PR 01 detalhado |
+| [33-backup-restore-runbook.md](./33-backup-restore-runbook.md) | Backup/restore de Postgres, Qdrant e storage |
 
 ## Convenção
 
