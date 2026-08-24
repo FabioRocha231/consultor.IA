@@ -467,8 +467,15 @@ async function runRuntimeEgressScan({ json = false } = {}) {
   const llmStub = await startLlmStub();
   const n8nStub = await startN8nStub();
   const proxy = await startEgressProxy();
-  const storageDir = fs.mkdtempSync(path.join(os.tmpdir(), "privacy-runtime-"));
-  const collectorHotdir = path.resolve(storageDir, "../../collector/hotdir");
+  // Layout under one temp root so that the server's relative hotdir
+  // resolution (STORAGE_DIR/../../collector/hotdir) lands inside our tree
+  // instead of /collector/hotdir at filesystem root (which is not writable
+  // in CI).
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "privacy-runtime-"));
+  const serverRoot = path.join(tempRoot, "server");
+  const storageDir = path.join(serverRoot, "storage");
+  const collectorHotdir = path.join(tempRoot, "collector", "hotdir");
+  fs.mkdirSync(storageDir, { recursive: true });
   fs.mkdirSync(collectorHotdir, { recursive: true });
   const egressLogPath = path.join(storageDir, "egress.jsonl");
   const reportPath = path.join(os.tmpdir(), "privacy-runtime-report.json");
@@ -828,8 +835,7 @@ async function runRuntimeEgressScan({ json = false } = {}) {
     } catch (error) {
       log(`Could not drop database ${dbName}: ${error.message}`);
     }
-    fs.rmSync(storageDir, { recursive: true, force: true });
-    fs.rmSync(collectorHotdir, { recursive: true, force: true });
+    fs.rmSync(tempRoot, { recursive: true, force: true });
   }
 
   const findings = validateEgress(egress, allowlist);
