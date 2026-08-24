@@ -26,3 +26,19 @@ Classificação: P1 = incidente, P2 = degradação, P3 = aviso.
 - Silenciamento por manutenção com janela.
 - Testar alertas no staging antes de produção.
 - Cada alerta deve ter runbook: quem, o que, como verificar, rollback.
+
+## Implementação PR 22
+
+O PR 22 provisiona 7 alertas em `infra/grafana/provisioning/alerting/`, com `for: 5m` em todos:
+
+| Grupo | Severidade | Threshold |
+| --- | --- | --- |
+| Platform Health | critical | `up == 0` |
+| LLM Errors | warning | error rate > 5% |
+| P95 Latency | warning | LLM P95 > 5s |
+| RAG Fallback Spike | warning | fallback > 50% com >= 3 fallbacks |
+| Cost Spike | warning | custo diário > 2x média móvel 7d |
+| Disk Capacity | critical | disco > 85% |
+| Document Ingestion Failures | warning | > 3 falhas / 5m |
+
+Alertas P3 e sinais de baixo volume continuam fora da página para evitar alert fatigue, conforme a estratégia acima. Os contact points e políticas de notificação ficam em `contact-points.yaml` e `notification-policies.yaml`.

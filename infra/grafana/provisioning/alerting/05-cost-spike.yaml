@@ -1,0 +1,48 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: consultor.IA Cost
+    folder: consultor.IA / Alerts
+    interval: 1m
+    rules:
+      - uid: consultor-ia-cost-spike
+        title: Daily LLM cost above 2x baseline
+        condition: C
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Daily LLM cost is above 2x the 7-day moving average.
+          runbook_url: docs/architecture/38-alerting-runbook.md#cost-spike
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: 'sum(increase(llm_estimated_cost_usd_total[24h])) > 2 * avg_over_time(sum(increase(llm_estimated_cost_usd_total[24h]))[7d:1h])'
+              instant: true
+              range: false
+            relativeTimeRange:
+              from: 300
+              to: 0
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator: and
+              settings:
+                mode: threshold
+                thresholds:
+                  - color: red
+                    value: 0
+            relativeTimeRange:
+              from: 0
+              to: 0
