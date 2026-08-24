@@ -51,5 +51,22 @@ services:
     ports:
       - "5432:5432"
 
+  grafana:
+    image: grafana/grafana:11.5.2
+    container_name: consultor-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - "../infra/grafana/provisioning:/etc/grafana/provisioning"
+      - "../infra/grafana/dashboards:/etc/grafana/dashboards"
+      - grafana_data:/var/lib/grafana
+    networks:
+      - anything-llm
+
 volumes:
   postgres_data:
+  grafana_data:
