@@ -1,77 +1,61 @@
 # 14 - Grafana Dashboard Plan
 
-Dashboards em `infra/grafana/dashboards/` (a criar) ou provisioning JSON no repo.
+Implementado no PR 21 como provisioning JSON em `infra/grafana/dashboards/`.
+Os datasources provisionados usam `uid` fixo (`prometheus`, `loki`, `tempo`)
+para os dashboards serem portáveis entre ambientes.
 
-## 01 - Platform Health
+## Dashboards provisionados
 
-- Availability
-- Request rate / error rate
-- P50/P95/P99 latency
-- HTTP status distribution
-- DB latency / connections
-- CPU / RAM / Disk / Network
-- Container health / restart count
+| Arquivo | Conteúdo |
+| --- | --- |
+| `01-platform-health.json` | Availability, CPU/RAM/disk, restarts, status Postgres/Qdrant/Alloy/n8n, request/error rate, HTTP P95, DB P95 |
+| `02-http-api.json` | req/s, 2xx/4xx/5xx, P50/P95/P99, status distribution, slowest endpoints |
+| `03-llm-performance.json` | requests/errors por provider/model, tokens, latência, TTFT, rate limits, custo estimado |
+| `04-rag-quality.json` | queries, retrieval latency, chunks, best similarity, no-result, fallback, handoff, config source, reranking |
+| `05-agent-execution.json` | runs/failures, tool calls/errors, tool latency, top tools, iterations, approval events |
+| `06-n8n-integrations.json` | requests, success/failure, latência, retry rate, timeouts, tool distribution |
+| `07-document-ingestion.json` | ingestion success/failure, embedding jobs/failures, processing latency, knowledge base docs |
+| `08-cost.json` | custo total/trend, por provider/model/empresa, custo/tokens por chamada, conversa e mensagem |
+| `09-company-overview.json` | painel por organização: availability, conversas, mensagens, usuários, P95, fallback, handoff, erros, custo, feedback, feedback traces |
 
-## 02 - LLM Performance
+## Métricas atuais
 
-- Requests/errors/rate limits
-- Tokens (input/output)
-- Latency P50/P95/P99
-- TTFT
-- Estimated cost por provider/model
+O source de verdade é o código OTel:
 
-## 03 - RAG Quality
+- `server/utils/observability/ai.js`: LLM, RAG, agent, tool, document, embedding, eval.
+- `server/utils/observability/integrations.js`: n8n.
+- `docs/architecture/11-metrics-spec.md`: spec de labels.
 
-- Queries
-- Retrieval latency
-- Chunks retrieved
-- Best similarity score
-- No results
-- Fallback/human handoff
-- Embedding latency/errors
+Métricas que ainda não são emitidas ficam com `TODO` no JSON e query
+placeholder. Nenhuma métrica deve ser inventada no dashboard.
 
-## 04 - Agent & Tool Execution
+## Métricas pendentes (TODO)
 
-- Agent runs/failures
-- Tool calls/errors/latency
-- Top tools
-- Approval events
+- HTTP: `http_server_requests_total`, `http_server_duration_seconds`.
+- Infra: `process_cpu_seconds_total`, `process_resident_memory_bytes`,
+  `node_filesystem_*`, `container_restart_count`, `db_query_duration_seconds`.
+- Produto: `conversations_total`, `messages_total`, `active_users`,
+  `feedback_positive_total`, `feedback_negative_total`,
+  `knowledge_base_documents`.
+- RAG: `rag_config_source_total`, `rag_reranking_total`.
+- Agent: `agent_iterations_total`, `agent_approval_events_total`.
+- n8n: `n8n_retries_total`.
+- Documento: `document_processing_latency_seconds`.
 
-## 05 - n8n / Integrations
+## Labels
 
-- Requests/failures/latency
-- Tools
-- Idempotency collisions
-- Rate limit events
-
-## 06 - Document Ingestion
-
-- Ingestion total/failures
-- Processing latency
-- Embedding jobs
-- Knowledge base document count
-
-## 07 - Costs
-
-- Estimated cost por empresa/provider/model/conversation
-- Daily/weekly trend
-- Alert on cost spike
-
-## 08 - Company Overview
-
-- Por empresa: availability, requests, latency, LLM errors, RAG fallback, tokens, cost, feedback
-- Filtros: `organization_id`, `deployment_id`, período
-
-## 09 - Errors & Incidents
-
-- Error rate
-- Top errors
-- Traces com status error
-- Recent error logs
-- Tool/integration failures
+- LLM usa `organization` hoje; a spec alvo é `organization_id`.
+- RAG hoje usa `vector_db`, `fallback.kind` e não tem `organization`.
+- n8n usa `tool`, `organization`, `result`, `error.kind`.
+- `deployment_id` ainda não é emitido; filtros manuais por `organization`
+  cobrem o MVP de 1 deployment por empresa.
 
 ## Correlação conversa
 
-- Painel de trace: input `trace_id` ou `conversation_id`.
-- Grafana Tempo + Loki: abrir trace, ver spans, logs correlacionados, métricas.
-- Feedback: buscar mensagem por `conversation_id` e `organization_id`.
+- Painel `Feedback Traces` em `09-company-overview.json` usa TraceQL:
+  `{ resource.service.name = "consultor-ia" && span.feedback.score != "" }`.
+- Isso funciona sem o PR 17. Quando o PR 17 persistir `trace_id` em
+  `workspace_chats`, o operador pode abrir o mesmo trace pelo ID salvo no
+  feedback sem depender do TraceQL.
+- Tempo + Loki permitem abrir trace e logs correlacionados via `trace_id`.
+- Feedback no banco continua buscável por `conversation_id` e `organization_id`.

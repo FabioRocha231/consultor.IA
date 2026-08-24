@@ -64,6 +64,9 @@ services:
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - "../infra/grafana/provisioning:/etc/grafana/provisioning"
+      - "../infra/grafana/dashboards:/etc/grafana/dashboards"
       GF_UNIFIED_ALERTING_ENABLED: "true"
       GF_ALERTING_ENABLED: "true"
       GF_SMTP_ENABLED: ${SMTP_ENABLED:-false}
@@ -76,6 +79,19 @@ services:
       ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-alerts@localhost}
     volumes:
       - "../infra/grafana/provisioning:/etc/grafana/provisioning"
+      GF_UNIFIED_ALERTING_ENABLED: "true"
+      GF_ALERTING_ENABLED: "true"
+      GF_SMTP_ENABLED: ${SMTP_ENABLED:-false}
+      GF_SMTP_HOST: ${SMTP_HOST:-}
+      GF_SMTP_USER: ${SMTP_USER:-}
+      GF_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      GF_SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-alerts@consultor.local}
+      GF_SMTP_FROM_NAME: ${SMTP_FROM_NAME:-consultor.IA Alerts}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-http://localhost:65534}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-alerts@localhost}
+    volumes:
+      - "../infra/grafana/provisioning:/etc/grafana/provisioning"
+      - "../infra/grafana/dashboards:/etc/grafana/dashboards"
       - grafana_data:/var/lib/grafana
     networks:
       - anything-llm
