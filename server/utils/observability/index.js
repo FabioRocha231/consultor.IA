@@ -8,7 +8,7 @@ const {
 } = require("@opentelemetry/resources");
 const { logs: sdkLogs, NodeSDK } = require("@opentelemetry/sdk-node");
 const { ATTR_SERVICE_NAME } = require("@opentelemetry/semantic-conventions");
-const { createTraceExporter } = require("./tracing");
+const { createSpanProcessor } = require("./tracing");
 const { createMetricReader } = require("./metrics");
 
 let sdk = null;
@@ -42,7 +42,7 @@ function start(options = {}) {
 
   sdk = new NodeSDK({
     resource,
-    traceExporter: createTraceExporter(),
+    spanProcessors: [createSpanProcessor()],
     metricReaders: [createMetricReader()],
     logRecordProcessors: [
       new sdkLogs.BatchLogRecordProcessor(new OTLPLogExporter()),
