@@ -7,7 +7,11 @@ const { addChatCostToMetrics } = require("../helpers/modelPricing");
 const { writeResponseChunk } = require("../helpers/chat/responses");
 const { abortConnectorOnClientDisconnect } = require("../helpers/abortSignals");
 const { grepAgents } = require("./agents");
-const { recordLlmCall, withSpan } = require("../observability/ai");
+const {
+  getActiveTraceId,
+  recordLlmCall,
+  withSpan,
+} = require("../observability/ai");
 const {
   buildNoContextResponse,
   resolveOrganizationForRag,
@@ -67,6 +71,7 @@ async function streamChatWithWorkspaceInner(
   organization = null
 ) {
   const uuid = uuidv4();
+  const traceId = getActiveTraceId();
   const updatedMessage = await grepCommand(message, user);
 
   if (Object.keys(VALID_COMMANDS).includes(updatedMessage)) {
@@ -178,6 +183,7 @@ async function streamChatWithWorkspaceInner(
       },
       threadId: thread?.id || null,
       include: false,
+      traceId,
       user,
     });
     return;
@@ -326,6 +332,7 @@ async function streamChatWithWorkspaceInner(
       },
       threadId: thread?.id || null,
       include: false,
+      traceId,
       user,
     });
     return;
@@ -475,6 +482,7 @@ async function streamChatWithWorkspaceInner(
         metrics,
       },
       threadId: thread?.id || null,
+      traceId,
       user,
     });
 

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { isMobile } from "react-device-detect";
+import { Link } from "react-router-dom";
 import { Plus, Trash, Play, X } from "@phosphor-icons/react";
 import Sidebar, { SidebarMobileHeader } from "@/components/Sidebar";
+import useUser from "@/hooks/useUser";
 import Modal, {
   ModalBody,
   ModalFooter,
@@ -13,6 +15,7 @@ import Modal, {
 } from "@/components/lib/Modal";
 import { API_BASE } from "@/utils/constants";
 import { baseHeaders } from "@/utils/request";
+import paths from "@/utils/paths";
 
 async function api(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
@@ -41,6 +44,7 @@ function parseTags(value = "") {
 
 export default function Eval() {
   const { t } = useTranslation();
+  const { user } = useUser();
   const [datasets, setDatasets] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [selectedDataset, setSelectedDataset] = useState(null);
@@ -54,6 +58,7 @@ export default function Eval() {
   const [draft, setDraft] = useState({
     name: "",
     description: "",
+    company: "",
     questions: [emptyQuestion()],
   });
   const [questionDraft, setQuestionDraft] = useState(emptyQuestion());
@@ -113,6 +118,7 @@ export default function Eval() {
         body: JSON.stringify({
           name: draft.name,
           description: draft.description,
+          company: draft.company || null,
           questions: draft.questions.map((question) => ({
             question: question.question,
             expectedAnswer: question.expectedAnswer || null,
@@ -122,7 +128,12 @@ export default function Eval() {
         }),
       });
       setShowCreate(false);
-      setDraft({ name: "", description: "", questions: [emptyQuestion()] });
+      setDraft({
+        name: "",
+        description: "",
+        company: "",
+        questions: [emptyQuestion()],
+      });
       setSelectedId(data.dataset.id);
       await loadDatasets();
     } catch (err) {
@@ -215,6 +226,15 @@ export default function Eval() {
           <Plus size={16} weight="bold" />
           {t("eval.datasets.new")}
         </button>
+        {user?.role === "admin" && (
+          <Link
+            to={paths.liveEval()}
+            className="flex h-9 items-center gap-2 rounded-lg border border-theme-sidebar-border px-4 text-sm text-theme-text-primary"
+          >
+            <Play size={15} />
+            {t("eval.live.title")}
+          </Link>
+        )}
       </header>
 
       {error && (
@@ -300,6 +320,14 @@ export default function Eval() {
                 onChange={(event) =>
                   setDraft({ ...draft, description: event.target.value })
                 }
+              />
+              <ModalInput
+                label={t("eval.live.company")}
+                value={draft.company}
+                onChange={(event) =>
+                  setDraft({ ...draft, company: event.target.value })
+                }
+                placeholder={t("eval.live.companyPlaceholder")}
               />
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-medium text-theme-text-primary">
@@ -710,3 +738,5 @@ function RunMetrics({ metrics, compact = false }) {
     </div>
   );
 }
+
+export { EvalShell };

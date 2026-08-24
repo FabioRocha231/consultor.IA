@@ -1,0 +1,48 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: consultor.IA LLM Latency
+    folder: consultor.IA / Alerts
+    interval: 1m
+    rules:
+      - uid: consultor-ia-llm-p95-latency
+        title: LLM P95 latency above 5s
+        condition: C
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: LLM P95 latency is above 5 seconds for 5 minutes.
+          runbook_url: docs/architecture/38-alerting-runbook.md#p95-latency
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: 'histogram_quantile(0.95, sum(rate(llm_latency_ms_bucket[5m])) by (le)) > 5000'
+              instant: true
+              range: false
+            relativeTimeRange:
+              from: 300
+              to: 0
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator: and
+              settings:
+                mode: threshold
+                thresholds:
+                  - color: red
+                    value: 0
+            relativeTimeRange:
+              from: 0
+              to: 0

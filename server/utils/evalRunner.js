@@ -5,6 +5,7 @@ const {
   recordEvalQuestion,
   recordEvalRun,
 } = require("./observability/ai");
+const { buildLiveServices, liveEvalEnabled } = require("./evalLiveRunner");
 
 function hashString(value = "") {
   let hash = 0;
@@ -30,6 +31,15 @@ function sum(values = []) {
   const finite = values.filter((value) => Number.isFinite(value));
   if (finite.length === 0) return null;
   return finite.reduce((total, value) => total + value, 0);
+}
+
+function percentile(values = [], percent = 50) {
+  const sorted = values
+    .filter((value) => Number.isFinite(value))
+    .sort((a, b) => a - b);
+  if (sorted.length === 0) return null;
+  const index = Math.max(0, Math.ceil((percent / 100) * sorted.length) - 1);
+  return sorted[Math.min(sorted.length - 1, index)];
 }
 
 async function mockEmbed() {
@@ -72,7 +82,13 @@ const MOCK_SERVICES = {
   generate: mockGenerate,
 };
 
-async function runEval({ runId, config = null, mocks = {} } = {}) {
+async function runEval({
+  runId,
+  config = null,
+  mocks = {},
+  services = null,
+  mode = null,
+} = {}) {
   const run = await EvalRun.get(runId);
   if (!run) return { ok: false, error: "Evaluation run not found." };
 
@@ -86,18 +102,26 @@ async function runEval({ runId, config = null, mocks = {} } = {}) {
   recordEvalRun({ organization: run.organizationId, status: "running" });
 
   const ragConfig = config || run.configSnapshot || {};
-  const services = { ...MOCK_SERVICES, ...mocks };
+  const evalMode = mode ?? (liveEvalEnabled() ? "live" : "mock");
+  const activeServices = services || {
+    ...(evalMode === "live" ? await buildLiveServices() : MOCK_SERVICES),
+    ...mocks,
+  };
   const questions = dataset.questions || [];
   const results = [];
 
   for (const question of questions) {
     const startedAt = Date.now();
     try {
-      const embedding = await services.embed(question.question, ragConfig);
-      const retrieval = await services.vectorSearch({
+      const embedding = await activeServices.embed(
+        question.question,
+        ragConfig
+      );
+      const retrieval = await activeServices.vectorSearch({
         question,
         vector: embedding?.vector,
         config: ragConfig,
+        company: dataset.company,
       });
       const sources = Array.isArray(retrieval?.sources)
         ? retrieval.sources
@@ -112,7 +136,7 @@ async function runEval({ runId, config = null, mocks = {} } = {}) {
       const context = sources
         .map((source) => `[${source.filename}]\n${source.snippet || ""}`)
         .join("\n\n");
-      const generation = await services.generate({
+      const generation = await activeServices.generate({
         question,
         sources,
         context,
@@ -132,7 +156,7 @@ async function runEval({ runId, config = null, mocks = {} } = {}) {
       const latencyMs = Math.max(1, Math.round(Date.now() - startedAt));
       const rawCost = Number(generation?.costUsd);
       const costUsd = Number.isFinite(rawCost) ? rawCost : null;
-      const created = await EvalResult.create({
+      const resultRecord = {
         runId,
         questionId: question.id,
         answer,
@@ -142,8 +166,12 @@ async function runEval({ runId, config = null, mocks = {} } = {}) {
         citationCorrectness,
         latencyMs,
         costUsd,
-      });
-      if (created.result) results.push(created.result);
+        inputTokens: generation?.inputTokens ?? null,
+        outputTokens: generation?.outputTokens ?? null,
+        totalTokens: generation?.totalTokens ?? null,
+      };
+      const created = await EvalResult.create(resultRecord);
+      if (created.result) results.push({ ...created.result, ...resultRecord });
       recordEvalQuestion({ organization: run.organizationId });
       recordEvalLatency({ organization: run.organizationId, latencyMs });
     } catch (error) {
@@ -161,7 +189,18 @@ async function runEval({ runId, config = null, mocks = {} } = {}) {
     answerCorrectness: rate(results, "answerCorrectness"),
     citationCorrectness: rate(results, "citationCorrectness"),
     avgLatencyMs: average(results.map((result) => result.latencyMs)),
+    latencyP50Ms: percentile(
+      results.map((result) => result.latencyMs),
+      50
+    ),
+    latencyP95Ms: percentile(
+      results.map((result) => result.latencyMs),
+      95
+    ),
     totalCostUsd: sum(results.map((result) => result.costUsd)),
+    totalTokens: sum(results.map((result) => result.totalTokens)),
+    totalInputTokens: sum(results.map((result) => result.inputTokens)),
+    totalOutputTokens: sum(results.map((result) => result.outputTokens)),
   };
   await EvalRun.complete(runId, {
     totalQuestions: questions.length,

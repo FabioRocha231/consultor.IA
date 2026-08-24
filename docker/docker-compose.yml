@@ -18,6 +18,7 @@ services:
     volumes:
       - "./.env:/app/server/.env"
       - "../server/storage:/app/server/storage"
+      - "../backups:/var/backups/consultor-ia"
       - "../collector/hotdir/:/app/collector/hotdir"
       - "../collector/outputs/:/app/collector/outputs"
     user: "${UID:-1000}:${GID:-1000}"
@@ -25,6 +26,9 @@ services:
       - "3001:3001"
     env_file:
       - .env
+    # Optional first-admin bootstrap. Set BOTH ADMIN_EMAIL and ADMIN_PASSWORD in
+    # docker/.env before the first boot. The seed is idempotent and ignores
+    # these values after an admin/manager already exists.
     networks:
       - anything-llm
     depends_on:
@@ -60,6 +64,31 @@ services:
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - "../infra/grafana/provisioning:/etc/grafana/provisioning"
+      - "../infra/grafana/dashboards:/etc/grafana/dashboards"
+      GF_UNIFIED_ALERTING_ENABLED: "true"
+      GF_ALERTING_ENABLED: "true"
+      GF_SMTP_ENABLED: ${SMTP_ENABLED:-false}
+      GF_SMTP_HOST: ${SMTP_HOST:-}
+      GF_SMTP_USER: ${SMTP_USER:-}
+      GF_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      GF_SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-alerts@consultor.local}
+      GF_SMTP_FROM_NAME: ${SMTP_FROM_NAME:-consultor.IA Alerts}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-http://localhost:65534}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-alerts@localhost}
+    volumes:
+      - "../infra/grafana/provisioning:/etc/grafana/provisioning"
+      GF_UNIFIED_ALERTING_ENABLED: "true"
+      GF_ALERTING_ENABLED: "true"
+      GF_SMTP_ENABLED: ${SMTP_ENABLED:-false}
+      GF_SMTP_HOST: ${SMTP_HOST:-}
+      GF_SMTP_USER: ${SMTP_USER:-}
+      GF_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      GF_SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-alerts@consultor.local}
+      GF_SMTP_FROM_NAME: ${SMTP_FROM_NAME:-consultor.IA Alerts}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-http://localhost:65534}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-alerts@localhost}
     volumes:
       - "../infra/grafana/provisioning:/etc/grafana/provisioning"
       - "../infra/grafana/dashboards:/etc/grafana/dashboards"

@@ -1,6 +1,7 @@
 const { Organization } = require("../models/organization");
 const { EvalDataset, EvalQuestion } = require("../models/evalDataset");
 const { EvalRun } = require("../models/evalRun");
+const { EventLogs } = require("../models/eventLogs");
 const { reqBody } = require("../utils/http");
 const { validatedRequest } = require("../utils/middleware/validatedRequest");
 const { resolveRagConfig, validateRagConfig } = require("../utils/ragConfig");
@@ -36,6 +37,16 @@ async function evalRoleGuard(request, response, next) {
   return response.status(403).json({ error: "Forbidden" });
 }
 
+function isLiveEvalAdmin(response) {
+  if (!response.locals?.multiUserMode) return true;
+  return response.locals?.user?.role === "admin";
+}
+
+function liveEvalAdminGuard(request, response, next) {
+  if (isLiveEvalAdmin(response)) return next();
+  return response.status(403).json({ error: "Forbidden" });
+}
+
 function evalEndpoints(app) {
   if (!app) return;
 
@@ -51,6 +62,7 @@ function evalEndpoints(app) {
         const offset = parseOffset(request.query?.offset);
         const { datasets, total } = await EvalDataset.list({
           organizationId: organization.id,
+          company: request.query?.company,
           limit,
           offset,
         });
@@ -74,6 +86,7 @@ function evalEndpoints(app) {
         const { dataset, error } = await EvalDataset.create({
           name: body.name,
           description: body.description,
+          company: body.company,
           organizationId: organization.id,
           questions: body.questions,
         });
@@ -166,6 +179,76 @@ function evalEndpoints(app) {
   );
 
   app.post(
+    "/eval/live",
+    [validatedRequest, evalRoleGuard, liveEvalAdminGuard],
+    async (request, response) => {
+      try {
+        if (process.env.EVAL_LIVE !== "true")
+          return response.status(403).json({
+            error:
+              "Live eval is disabled. Set EVAL_LIVE=true before running live evaluations.",
+          });
+
+        const organization = await currentOrganization();
+        if (!organization)
+          return response.status(404).json({ error: "No organization found." });
+        const body = reqBody(request) || {};
+        if (!body.datasetId)
+          return response.status(400).json({ error: "datasetId is required." });
+
+        const dataset = await EvalDataset.get(body.datasetId);
+        if (!dataset)
+          return response.status(404).json({ error: "Dataset not found." });
+        if ((dataset.questions || []).length === 0)
+          return response
+            .status(400)
+            .json({ error: "Dataset has no questions." });
+
+        let config;
+        if (body.configOverrides) {
+          const { ok, value, error } = validateRagConfig(body.configOverrides);
+          if (!ok) return response.status(400).json({ error });
+          config = resolveRagConfig({
+            organization: { ragConfig: value },
+            workspace: {},
+          });
+        } else {
+          config = resolveRagConfig({ organization, workspace: {} });
+        }
+        config = { ...config, mode: "live", company: dataset.company };
+
+        const { run, error } = await EvalRun.create({
+          datasetId: dataset.id,
+          organizationId: organization.id,
+          configSnapshot: config,
+        });
+        if (!run) return response.status(400).json({ success: false, error });
+
+        const userId = response.locals?.user?.id ?? null;
+        await EventLogs.logEvent(
+          "rag_eval.live_run",
+          {
+            user_id: userId,
+            company: dataset.company,
+            dataset_id: dataset.id,
+            run_id: run.id,
+            timestamp: new Date().toISOString(),
+            cost_estimate: null,
+          },
+          userId
+        );
+        runEval({ runId: run.id, config, mode: "live" }).catch((error) =>
+          EvalRun.fail(run.id, error)
+        );
+        response.status(202).json({ run, error: null });
+      } catch (error) {
+        console.error("Error starting live eval run:", error);
+        response.sendStatus(500).end();
+      }
+    }
+  );
+
+  app.post(
     "/eval/datasets/:id/runs",
     [validatedRequest, evalRoleGuard],
     async (request, response) => {
@@ -242,6 +325,8 @@ function evalEndpoints(app) {
       try {
         const run = await EvalRun.get(request.params.id);
         if (!run) return response.status(404).json({ error: "Run not found." });
+        if (run.configSnapshot?.mode === "live" && !isLiveEvalAdmin(response))
+          return response.status(403).json({ error: "Forbidden" });
         response.status(200).json({ run, error: null });
       } catch (error) {
         console.error("Error getting eval run:", error);
@@ -251,4 +336,9 @@ function evalEndpoints(app) {
   );
 }
 
-module.exports = { evalEndpoints, evalRoleGuard };
+module.exports = {
+  evalEndpoints,
+  evalRoleGuard,
+  isLiveEvalAdmin,
+  liveEvalAdminGuard,
+};

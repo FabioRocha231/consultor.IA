@@ -1,0 +1,48 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: consultor.IA RAG Quality
+    folder: consultor.IA / Alerts
+    interval: 1m
+    rules:
+      - uid: consultor-ia-rag-fallback-spike
+        title: RAG fallback rate above 50%
+        condition: C
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: RAG fallback rate is above 50% with at least 3 fallbacks in 5 minutes.
+          runbook_url: docs/architecture/38-alerting-runbook.md#rag-fallback-spike
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: 'sum(rate(rag_fallback_total[5m])) / clamp_min(sum(rate(rag_queries_total[5m])), 0.001) > 0.5 and sum(increase(rag_fallback_total[5m])) >= 3'
+              instant: true
+              range: false
+            relativeTimeRange:
+              from: 300
+              to: 0
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator: and
+              settings:
+                mode: threshold
+                thresholds:
+                  - color: red
+                    value: 0
+            relativeTimeRange:
+              from: 0
+              to: 0

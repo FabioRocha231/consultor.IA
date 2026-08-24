@@ -12,6 +12,7 @@ const {
 const { WorkspaceChats } = require("../../../models/workspaceChats");
 const { User } = require("../../../models/user");
 const { ApiChatHandler } = require("../../../utils/chats/apiChatHandler");
+const { chatLimiter } = require("../../../utils/middleware/rateLimit");
 function apiWorkspaceThreadEndpoints(app) {
   if (!app) return;
 
@@ -318,7 +319,7 @@ function apiWorkspaceThreadEndpoints(app) {
 
   app.post(
     "/v1/workspace/:slug/thread/:threadSlug/chat",
-    [validApiKey],
+    [validApiKey, chatLimiter],
     async (request, response) => {
       /*
       #swagger.tags = ['Workspace Threads']

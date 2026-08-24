@@ -1,0 +1,19 @@
+{
+  "name": "Cardápio Restaurante A",
+  "description": "Dataset de avaliação RAG para o piloto A.",
+  "company": "restaurante-a",
+  "questions": [
+    {
+      "question": "Qual o horário de funcionamento?",
+      "expectedAnswer": "08h às 18h",
+      "expectedSource": "cardapio.pdf",
+      "tags": ["horario"]
+    },
+    {
+      "question": "Qual o endereço?",
+      "expectedAnswer": "Rua A, 10",
+      "expectedSource": "contato.pdf",
+      "tags": ["contato"]
+    }
+  ]
+}

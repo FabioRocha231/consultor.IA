@@ -104,6 +104,7 @@ function feedbackEndpoints(app) {
             score: chat.feedbackScore,
             category: chat.feedbackCategory,
             comment: chat.feedbackComment,
+            traceId: chat.traceId || null,
             feedbackAt: chat.feedbackAt,
             ragConfig: organization.ragConfig || null,
           };

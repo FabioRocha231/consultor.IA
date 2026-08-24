@@ -1,0 +1,48 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: consultor.IA Disk Capacity
+    folder: consultor.IA / Alerts
+    interval: 1m
+    rules:
+      - uid: consultor-ia-disk-capacity
+        title: Disk usage above 85%
+        condition: C
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Filesystem usage is above 85% for 5 minutes.
+          runbook_url: docs/architecture/38-alerting-runbook.md#disk-capacity
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: '(1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) * 100 > 85'
+              instant: true
+              range: false
+            relativeTimeRange:
+              from: 300
+              to: 0
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+                  operator: and
+              settings:
+                mode: threshold
+                thresholds:
+                  - color: red
+                    value: 0
+            relativeTimeRange:
+              from: 0
+              to: 0

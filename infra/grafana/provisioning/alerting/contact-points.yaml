@@ -1,0 +1,34 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: consultor-ia-critical
+    receivers:
+      - uid: consultor-ia-webhook
+        type: webhook
+        settings:
+          url: '${ALERT_WEBHOOK_URL}'
+          httpMethod: POST
+        disableResolveMessage: false
+      - uid: consultor-ia-email
+        type: email
+        settings:
+          addresses: '${ALERT_EMAIL_TO}'
+        disableResolveMessage: false
+  - orgId: 1
+    name: consultor-ia-warning
+    receivers:
+      - uid: consultor-ia-webhook-warning
+        type: webhook
+        settings:
+          url: '${ALERT_WEBHOOK_URL}'
+          httpMethod: POST
+        disableResolveMessage: false
+  - orgId: 1
+    name: noop-dev
+    receivers:
+      - uid: consultor-ia-noop
+        type: webhook
+        settings:
+          url: http://localhost:65534
+        disableResolveMessage: true
