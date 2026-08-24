@@ -2,6 +2,8 @@ const { BackgroundService } = require("../BackgroundWorkers");
 const { EncryptionManager } = require("../EncryptionManager");
 const { CommunicationKey } = require("../comKey");
 const { Organization } = require("../../models/organization");
+const { spawn } = require("child_process");
+const path = require("path");
 const eagerLoadContextWindows = require("./eagerLoadContextWindows");
 const markOnboarded = require("./markOnboarded");
 const { PushNotifications } = require("../PushNotifications");
@@ -25,6 +27,34 @@ async function ensureDefaultOrganization() {
   );
 }
 
+async function runAdminBootstrap() {
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) return;
+
+  const seedPath = path.join(__dirname, "..", "..", "prisma", "seed.js");
+  const result = await new Promise((resolve) => {
+    const child = spawn(process.execPath, [seedPath], {
+      cwd: path.join(__dirname, "..", ".."),
+      env: process.env,
+      stdio: ["ignore", "inherit", "inherit"],
+    });
+    child.on("error", (error) => resolve({ success: false, error }));
+    child.on("close", (code) =>
+      resolve({
+        success: code === 0,
+        error: code === 0 ? null : new Error(`seed exited with code ${code}`),
+      })
+    );
+  });
+
+  if (result.success) {
+    console.log("[boot] Admin bootstrap completed.");
+  } else {
+    console.warn(
+      `[boot] Admin bootstrap failed and was skipped: ${result.error.message}`
+    );
+  }
+}
+
 // Testing SSL? You can make a self signed certificate and point the ENVs to that location
 // make a directory in server called 'sslcert' - cd into it
 // - openssl genrsa -aes256 -passout pass:gsahdg -out server.pass.key 4096
@@ -41,6 +71,7 @@ async function bootSSL(app, port = 3001) {
       `\x1b[33m[SSL BOOT ENABLED]\x1b[0m Loading the certificate and key for HTTPS mode...`
     );
     await ensureDefaultOrganization();
+    await runAdminBootstrap();
     const fs = require("fs");
     const https = require("https");
     const privateKey = fs.readFileSync(process.env.HTTPS_KEY_PATH);
@@ -82,6 +113,7 @@ async function bootHTTP(app, port = 3001) {
 
   if (process.env.OTEL_SDK_DISABLED !== "true") startObservability();
   await ensureDefaultOrganization();
+  await runAdminBootstrap();
   app
     .listen(port, async () => {
       await markOnboarded();
