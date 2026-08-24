@@ -52,6 +52,7 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | [18-tech-debt.md](./18-tech-debt.md) | Registro de dívida técnica |
 | [19-risks.md](./19-risks.md) | Riscos principais |
 | [20-recommended-first-pr.md](./20-recommended-first-pr.md) | PR 01 detalhado |
+| [31-admin-bootstrap-runbook.md](./31-admin-bootstrap-runbook.md) | Bootstrap do primeiro admin em um novo deployment |
 | [21-privacy-ci-gate.md](./21-privacy-ci-gate.md) | Privacy CI Gate (estático + network + dependency) |
 | [22-embed-audit.md](./22-embed-audit.md) | Auditoria do componente `embed/` |
 | [23-browser-extension-audit.md](./23-browser-extension-audit.md) | Auditoria do componente `browser-extension/` |
@@ -62,6 +63,8 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | [28-first-pr-plan-runtime-egress-audit.md](./28-first-pr-plan-runtime-egress-audit.md) | Plano detalhado do PR 14 |
 | [30-vendored-components-decision.md](./30-vendored-components-decision.md) | Decisão: browser-extension fora do build e hardening do embed |
 | [30-vendored-components-decision.md](./30-vendored-components-decision.md) | Decisão: browser-extension fora do build e hardening do embed |
+| [30-vendored-components-decision.md](./30-vendored-components-decision.md) | Decisão: browser-extension fora do build e hardening do embed |
+| [31-admin-bootstrap-runbook.md](./31-admin-bootstrap-runbook.md) | Bootstrap do primeiro admin em um novo deployment |
 
 ## Convenção
 
