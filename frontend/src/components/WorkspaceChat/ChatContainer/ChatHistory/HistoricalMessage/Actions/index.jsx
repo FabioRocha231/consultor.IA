@@ -1,6 +1,7 @@
 import React, { memo, useState } from "react";
 import useCopyText from "@/hooks/useCopyText";
 import {
+  Activity,
   Check,
   ThumbsUp,
   ThumbsDown,
@@ -35,6 +36,7 @@ const Actions = ({
   feedbackScore,
   feedbackCategory = null,
   feedbackComment = null,
+  traceId = null,
   chatId,
   slug,
   isLastMessage,
@@ -116,6 +118,7 @@ const Actions = ({
           )}
           {chatId && role !== "user" && !isEditing && (
             <div className="flex items-start gap-x-1">
+              {traceId && <TraceButton traceId={traceId} />}
               <FeedbackButton
                 isSelected={selectedFeedback === true}
                 handleFeedback={handlePositiveFeedback}
@@ -174,6 +177,17 @@ const Actions = ({
         />
         <ModalBody>
           <div className="flex flex-col gap-y-2">
+            {traceId && (
+              <a
+                href={traceUrl(traceId)}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-x-1 text-xs text-zinc-300 light:text-slate-500 hover:text-sky-300 light:hover:text-sky-700"
+              >
+                <Activity size={16} />
+                {t("workspace.trace.view")}
+              </a>
+            )}
             {FEEDBACK_CATEGORIES.map((category) => (
               <button
                 key={category}
@@ -244,6 +258,29 @@ function FeedbackButton({
       </button>
     </div>
   );
+}
+
+function TraceButton({ traceId }) {
+  const { t } = useTranslation();
+  return (
+    <div className="mt-3 relative">
+      <a
+        href={traceUrl(traceId)}
+        target="_blank"
+        rel="noreferrer"
+        data-tooltip-id="view-trace"
+        data-tooltip-content={t("workspace.trace.view")}
+        aria-label={t("workspace.trace.view")}
+        className="text-zinc-300 light:text-slate-500 hover:text-sky-300 light:hover:text-sky-700"
+      >
+        <Activity size={20} className="mb-1" />
+      </a>
+    </div>
+  );
+}
+
+function traceUrl(traceId) {
+  return `https://grafana.local/explore?trace=${traceId}`;
 }
 
 function CopyMessage({ message }) {

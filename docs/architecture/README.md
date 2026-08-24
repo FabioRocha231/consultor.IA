@@ -26,7 +26,10 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | Camada de configuração RAG | [ADR-008](../adr/008-rag-configuration-strategy.md) |
 | Política de logging sensível | [ADR-009](../adr/009-sensitive-logging-policy.md) |
 | Estratégia de sincronização upstream | [ADR-010](../adr/010-upstream-synchronization-strategy.md) |
+| Persistência de trace para correlação | [ADR-014](../adr/014-trace-persistence-strategy.md) |
 | Política de egress runtime | [ADR-011](../adr/011-runtime-egress-policy.md) |
+| Política de egress runtime | [ADR-011](../adr/011-runtime-egress-policy.md) |
+| Persistência de trace para correlação | [ADR-014](../adr/014-trace-persistence-strategy.md) |
 
 ## Índice
 
@@ -52,6 +55,7 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | [18-tech-debt.md](./18-tech-debt.md) | Registro de dívida técnica |
 | [19-risks.md](./19-risks.md) | Riscos principais |
 | [20-recommended-first-pr.md](./20-recommended-first-pr.md) | PR 01 detalhado |
+| [32-trace-persistence-runbook.md](./32-trace-persistence-runbook.md) | Correlação mensagem/feedback com traces |
 | [31-admin-bootstrap-runbook.md](./31-admin-bootstrap-runbook.md) | Bootstrap do primeiro admin em um novo deployment |
 | [21-privacy-ci-gate.md](./21-privacy-ci-gate.md) | Privacy CI Gate (estático + network + dependency) |
 | [22-embed-audit.md](./22-embed-audit.md) | Auditoria do componente `embed/` |
@@ -65,6 +69,17 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | [30-vendored-components-decision.md](./30-vendored-components-decision.md) | Decisão: browser-extension fora do build e hardening do embed |
 | [30-vendored-components-decision.md](./30-vendored-components-decision.md) | Decisão: browser-extension fora do build e hardening do embed |
 | [31-admin-bootstrap-runbook.md](./31-admin-bootstrap-runbook.md) | Bootstrap do primeiro admin em um novo deployment |
+| [21-privacy-ci-gate.md](./21-privacy-ci-gate.md) | Privacy CI Gate (estático + network + dependency) |
+| [22-embed-audit.md](./22-embed-audit.md) | Auditoria do componente `embed/` |
+| [23-browser-extension-audit.md](./23-browser-extension-audit.md) | Auditoria do componente `browser-extension/` |
+| [24-runtime-egress-map.md](./24-runtime-egress-map.md) | Mapa de egress do `server/` e `collector/` |
+| [25-current-master-verification.md](./25-current-master-verification.md) | Verificação do master pós-MVP |
+| [26-production-readiness-gap-analysis.md](./26-production-readiness-gap-analysis.md) | Gap analysis para piloto |
+| [27-revised-pr-roadmap.md](./27-revised-pr-roadmap.md) | Roadmap pós-MVP (PR 14-25) |
+| [28-first-pr-plan-runtime-egress-audit.md](./28-first-pr-plan-runtime-egress-audit.md) | Plano detalhado do PR 14 |
+| [30-vendored-components-decision.md](./30-vendored-components-decision.md) | Decisão: browser-extension fora do build e hardening do embed |
+| [31-admin-bootstrap-runbook.md](./31-admin-bootstrap-runbook.md) | Bootstrap do primeiro admin em um novo deployment |
+| [32-trace-persistence-runbook.md](./32-trace-persistence-runbook.md) | Correlação mensagem/feedback com traces |
 
 ## Convenção
 

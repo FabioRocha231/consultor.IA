@@ -24,7 +24,11 @@ const {
   isWithin,
   sanitizeFileName,
 } = require("../files");
-const { recordLlmCall, withSpan } = require("../observability/ai");
+const {
+  getActiveTraceId,
+  recordLlmCall,
+  withSpan,
+} = require("../observability/ai");
 const {
   buildNoContextResponse,
   resolveOrganizationForRag,
@@ -144,6 +148,7 @@ async function chatSyncInner({
   reset = false,
 }) {
   const uuid = uuidv4();
+  const traceId = getActiveTraceId();
   const chatMode = mode ?? workspace?.chatMode ?? "automatic";
   const ragOrganization = await resolveOrganizationForRag({
     organization,
@@ -234,6 +239,7 @@ async function chatSyncInner({
           include: true,
           threadId: thread?.id || null,
           apiSessionId: sessionId,
+          traceId,
           user,
         });
         return {
@@ -289,6 +295,7 @@ async function chatSyncInner({
       },
       include: false,
       apiSessionId: sessionId,
+      traceId,
     });
 
     return {
@@ -433,6 +440,7 @@ async function chatSyncInner({
       threadId: thread?.id || null,
       include: false,
       apiSessionId: sessionId,
+      traceId,
       user,
     });
 
@@ -538,6 +546,7 @@ async function chatSyncInner({
     },
     threadId: thread?.id || null,
     apiSessionId: sessionId,
+    traceId,
     user,
   });
 
@@ -590,6 +599,7 @@ async function streamChatInner({
   reset = false,
 }) {
   const uuid = uuidv4();
+  const traceId = getActiveTraceId();
   const chatMode = mode ?? workspace?.chatMode ?? "automatic";
   const ragOrganization = await resolveOrganizationForRag({
     organization,
@@ -682,6 +692,7 @@ async function streamChatInner({
           include: true,
           threadId: thread?.id || null,
           apiSessionId: sessionId,
+          traceId,
           user,
         });
         writeResponseChunk(response, {
@@ -752,6 +763,7 @@ async function streamChatInner({
       threadId: thread?.id || null,
       apiSessionId: sessionId,
       include: false,
+      traceId,
       user,
     });
     return;
@@ -906,6 +918,7 @@ async function streamChatInner({
       threadId: thread?.id || null,
       apiSessionId: sessionId,
       include: false,
+      traceId,
       user,
     });
     return;
@@ -1051,6 +1064,7 @@ async function streamChatInner({
       },
       threadId: thread?.id || null,
       apiSessionId: sessionId,
+      traceId,
       user,
     });
 
