@@ -62,7 +62,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "0",
+          "expr": "sum by (status_class) (rate(http_request_duration_seconds_count[5m]))",
           "legendFormat": "req/s",
           "range": true,
           "refId": "A"
@@ -125,7 +125,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "0",
+          "expr": "sum by (status_class) (rate(http_request_duration_seconds_count[5m]))",
           "legendFormat": "2xx",
           "range": true,
           "refId": "A"
@@ -188,7 +188,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "0",
+          "expr": "sum by (status_class) (rate(http_request_duration_seconds_count[5m]))",
           "legendFormat": "4xx",
           "range": true,
           "refId": "A"
@@ -251,7 +251,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "0",
+          "expr": "sum by (status_class) (rate(http_request_duration_seconds_count[5m]))",
           "legendFormat": "5xx",
           "range": true,
           "refId": "A"
@@ -342,7 +342,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "0",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
           "legendFormat": "P50",
           "range": true,
           "refId": "A"
@@ -353,7 +353,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "0",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
           "legendFormat": "P95",
           "range": true,
           "refId": "B"
@@ -364,7 +364,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "0",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
           "legendFormat": "P99",
           "range": true,
           "refId": "C"
@@ -455,7 +455,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "0",
+          "expr": "sum by (status_class) (rate(http_errors_total[5m]))",
           "legendFormat": "{{status}}",
           "range": true,
           "refId": "A"
@@ -514,7 +514,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "0",
+          "expr": "topk(10, sum by (route) (rate(http_request_duration_seconds_sum[5m])) / clamp_min(sum by (route) (rate(http_request_duration_seconds_count[5m])), 0.001))",
           "legendFormat": "{{route}}",
           "range": true,
           "refId": "A"

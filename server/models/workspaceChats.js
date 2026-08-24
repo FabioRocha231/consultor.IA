@@ -1,6 +1,9 @@
 const prisma = require("../utils/prisma");
 const { safeJSONStringify } = require("../utils/helpers/chat/responses");
-const { getActiveTraceId } = require("../utils/observability/ai");
+const {
+  getActiveTraceId,
+  recordFeedbackCounters,
+} = require("../utils/observability/ai");
 
 const TRACE_ID_PATTERN = /^[0-9a-f]{32}$/i;
 
@@ -325,6 +328,7 @@ const WorkspaceChats = {
           feedbackAt: score === null ? null : new Date(),
         },
       });
+      recordFeedbackCounters?.({ score, category });
       return { ok: true, chat };
     } catch (error) {
       console.error(error.message);
