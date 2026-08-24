@@ -7,6 +7,7 @@ const {
   flexUserRoleValid,
 } = require("../utils/middleware/multiUserProtected");
 const { EventLogs } = require("../models/eventLogs");
+const { chatLimiter } = require("../utils/middleware/rateLimit");
 const {
   validWorkspaceAndThreadSlug,
   validWorkspaceSlug,
@@ -20,7 +21,12 @@ function chatEndpoints(app) {
 
   app.post(
     "/workspace/:slug/stream-chat",
-    [validatedRequest, flexUserRoleValid([ROLES.all]), validWorkspaceSlug],
+    [
+      validatedRequest,
+      chatLimiter,
+      flexUserRoleValid([ROLES.all]),
+      validWorkspaceSlug,
+    ],
     async (request, response) => {
       try {
         const user = await userFromSession(request, response);
@@ -94,6 +100,7 @@ function chatEndpoints(app) {
     "/workspace/:slug/thread/:threadSlug/stream-chat",
     [
       validatedRequest,
+      chatLimiter,
       flexUserRoleValid([ROLES.all]),
       validWorkspaceAndThreadSlug,
     ],

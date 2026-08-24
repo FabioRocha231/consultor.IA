@@ -14,6 +14,7 @@ const { validateFeedbackInput } = require("../utils/feedbackValidation");
 const { getVectorDbClass, stripThinkingFromText } = require("../utils/helpers");
 const { handleFileUpload } = require("../utils/files/multer");
 const { validatedRequest } = require("../utils/middleware/validatedRequest");
+const { uploadLimiter } = require("../utils/middleware/rateLimit");
 const {
   flexUserRoleValid,
   ROLES,
@@ -98,6 +99,7 @@ function workspaceEndpoints(app) {
     "/workspace/:slug/upload",
     [
       validatedRequest,
+      uploadLimiter,
       flexUserRoleValid([ROLES.admin, ROLES.manager]),
       handleFileUpload,
     ],
@@ -164,7 +166,11 @@ function workspaceEndpoints(app) {
 
   app.post(
     "/workspace/:slug/upload-link",
-    [validatedRequest, flexUserRoleValid([ROLES.admin, ROLES.manager])],
+    [
+      validatedRequest,
+      uploadLimiter,
+      flexUserRoleValid([ROLES.admin, ROLES.manager]),
+    ],
     async (request, response) => {
       try {
         const Collector = new CollectorApi();
@@ -801,6 +807,7 @@ function workspaceEndpoints(app) {
     "/workspace/:slug/upload-and-embed",
     [
       validatedRequest,
+      uploadLimiter,
       flexUserRoleValid([ROLES.admin, ROLES.manager]),
       handleFileUpload,
     ],
