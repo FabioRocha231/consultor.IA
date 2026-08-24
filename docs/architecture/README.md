@@ -60,6 +60,8 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | [26-production-readiness-gap-analysis.md](./26-production-readiness-gap-analysis.md) | Gap analysis para piloto |
 | [27-revised-pr-roadmap.md](./27-revised-pr-roadmap.md) | Roadmap pós-MVP (PR 14-25) |
 | [28-first-pr-plan-runtime-egress-audit.md](./28-first-pr-plan-runtime-egress-audit.md) | Plano detalhado do PR 14 |
+| [30-vendored-components-decision.md](./30-vendored-components-decision.md) | Decisão: browser-extension fora do build e hardening do embed |
+| [30-vendored-components-decision.md](./30-vendored-components-decision.md) | Decisão: browser-extension fora do build e hardening do embed |
 
 ## Convenção
 
