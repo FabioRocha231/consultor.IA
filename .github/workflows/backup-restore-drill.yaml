@@ -32,14 +32,14 @@ jobs:
         ports:
           - 6333:6333
     env:
-      BACKUP_DIR: ${{ runner.temp }}/backup
+      BACKUP_DIR: $RUNNER_TEMP/backup
       POSTGRES_HOST: localhost
       POSTGRES_PORT: 5432
       POSTGRES_DB: consultor
       POSTGRES_USER: consultor
       POSTGRES_PASSWORD: consultor
       QDRANT_URL: http://localhost:6333
-      STORAGE_DIR: ${{ runner.temp }}/storage
+      STORAGE_DIR: $RUNNER_TEMP/storage
       DB_URL: postgresql://consultor:consultor@localhost:5432/consultor
 
     steps:
@@ -168,5 +168,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backup-restore-drill-report
-          path: ${{ runner.temp }}/backup-restore-report.txt
+          path: $RUNNER_TEMP/backup-restore-report.txt
           if-no-files-found: error
