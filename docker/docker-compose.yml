@@ -144,8 +144,9 @@ services:
     image: grafana/grafana:11.5.2
     container_name: consultor-grafana
     restart: unless-stopped
+    # Port 3030 on host to avoid conflict with Dokploy UI (which uses 3000).
     ports:
-      - "3000:3000"
+      - "3030:3000"
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: "false"
