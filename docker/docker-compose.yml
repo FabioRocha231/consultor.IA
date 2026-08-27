@@ -102,8 +102,10 @@ services:
     # to give qdrant 30s to fully initialize before failures count.
     # Uses bash /dev/tcp (not curl) because the qdrant image does not bundle
     # curl, and wget is also missing in v1.7.4 -- bash is always available.
+    # Forces bash explicitly: CMD-SHELL runs under /bin/sh which is dash on
+    # debian-slim, and dash does NOT implement /dev/tcp (bash builtin only).
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/6333 || exit 1"]
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/6333 || exit 1'"]
       interval: 10s
       timeout: 5s
       retries: 5
