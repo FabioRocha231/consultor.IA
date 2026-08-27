@@ -40,8 +40,21 @@ class ContextWindowFinder {
   constructor() {
     if (ContextWindowFinder.instance) return ContextWindowFinder.instance;
     ContextWindowFinder.instance = this;
-    if (!fs.existsSync(this.cacheLocation))
-      fs.mkdirSync(this.cacheLocation, { recursive: true });
+    // Defensive: mkdir may fail with EACCES on shared hosts where the
+    // storage dir is owned by a different user. Fall back to remote
+    // model-map pulls only -- the app still boots. The cache write
+    // failures are non-fatal because #pullRemoteModelMap already
+    // runs in a try/catch.
+    if (!fs.existsSync(this.cacheLocation)) {
+      try {
+        fs.mkdirSync(this.cacheLocation, { recursive: true });
+      } catch (e) {
+        this.log(
+          "Could not create local cache dir; continuing without on-disk cache.",
+          e.code || e.message
+        );
+      }
+    }
 
     // If the cache is stale or not found at all, pull the model map from remote
     if (this.isCacheStale || !fs.existsSync(this.cacheFilePath)) {
