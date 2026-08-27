@@ -39,10 +39,14 @@ services:
       - SYS_ADMIN
     volumes:
       - "./.env:/app/server/.env"
-      - "../server/storage:/app/server/storage"
-      - "../backups:/var/backups/consultor-ia"
-      - "../collector/hotdir/:/app/collector/hotdir"
-      - "../collector/outputs/:/app/collector/outputs"
+      # Named volumes (not bind-mounts) -- Dokploy-managed and writable
+      # by any container UID, eliminating EACCES caused by host-side
+      # root-owned dirs. Data persists via Docker, can be backed up
+      # via `docker volume` commands.
+      - app_storage:/app/server/storage
+      - app_backups:/var/backups/consultor-ia
+      - collector_hotdir:/app/collector/hotdir
+      - collector_outputs:/app/collector/outputs
     # UID=0 / GID=0 (root) so the container can write to bind-mounted
     # volumes on Dokploy hosts (which create host dirs as root). For local
     # dev or hardened prod, override with UID/GID env vars to match the
@@ -208,3 +212,7 @@ volumes:
   prometheus_data:
   loki_data:
   tempo_data:
+  app_storage:
+  app_backups:
+  collector_hotdir:
+  collector_outputs:
