@@ -43,7 +43,11 @@ services:
       - "../backups:/var/backups/consultor-ia"
       - "../collector/hotdir/:/app/collector/hotdir"
       - "../collector/outputs/:/app/collector/outputs"
-    user: "${UID:-1000}:${GID:-1000}"
+    # UID=0 / GID=0 (root) so the container can write to bind-mounted
+    # volumes on Dokploy hosts (which create host dirs as root). For local
+    # dev or hardened prod, override with UID/GID env vars to match the
+    # host owner; in that case the host dir must also be chown'd to that UID.
+    user: "${UID:-0}:${GID:-0}"
     ports:
       - "3001:3001"
     env_file:
