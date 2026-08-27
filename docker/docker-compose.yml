@@ -17,6 +17,14 @@ name: anythingllm
 networks:
   anything-llm:
     driver: bridge
+  # Dokploy shared network. Same network where Dokploy-managed services
+  # (Postgres, etc.) live. Attaching our compose to it lets the app
+  # reach them via service hostname (e.g. consultoria-db-cb57bn).
+  # Override with DOKPLOY_NETWORK env var if your Dokploy uses a
+  # different default network name.
+  dokploy-network:
+    external: true
+    name: ${DOKPLOY_NETWORK:-dokploy-network}
 
 services:
   anything-llm:
@@ -53,6 +61,7 @@ services:
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-consultor-ia}
     networks:
       - anything-llm
+      - dokploy-network
     # service_started (not service_healthy): app boots as soon as
     # the qdrant container is created, not when its healthcheck passes.
     # Qdrant takes <1s to be ready for connections; the healthcheck above
@@ -79,6 +88,7 @@ services:
       - qdrant_data:/qdrant/storage
     networks:
       - anything-llm
+      - dokploy-network
     # Robust healthcheck: uses the root endpoint (always 200 once qdrant is
     # listening), 127.0.0.1 to avoid DNS resolution issues, and start_period
     # to give qdrant 30s to fully initialize before failures count.
@@ -103,6 +113,7 @@ services:
       # via DNS name `alloy` on port 4318, no host mapping needed.
     networks:
       - anything-llm
+      - dokploy-network
     depends_on:
       prometheus:
         condition: service_started
@@ -126,6 +137,7 @@ services:
       - "9090:9090"
     networks:
       - anything-llm
+      - dokploy-network
 
   loki:
     image: grafana/loki:3.3.2
@@ -139,6 +151,7 @@ services:
       - "3100:3100"
     networks:
       - anything-llm
+      - dokploy-network
 
   tempo:
     image: grafana/tempo:2.6.0
@@ -154,6 +167,7 @@ services:
       # Tempo via DNS name `tempo` on port 4318, no host mapping needed.
     networks:
       - anything-llm
+      - dokploy-network
 
   grafana:
     image: grafana/grafana:11.5.2
@@ -181,6 +195,7 @@ services:
       - grafana_data:/var/lib/grafana
     networks:
       - anything-llm
+      - dokploy-network
 
 volumes:
   grafana_data:
