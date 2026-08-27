@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# Defensive storage permissions fix for Dokploy / shared-host deployments.
+# Dokploy creates host bind-mount dirs as root; container may run as root
+# (compose default UID=0) or as anythingllm (UID=1000 from Dockerfile).
+# This chmod makes them writable for both, ignoring failures because if
+# the dir is fine (local dev) the chmod is a no-op. Errors suppressed so
+# the script continues either way.
+chmod -R 777 /app/server/storage 2>/dev/null || true
+chmod -R 777 /var/backups/consultor-ia 2>/dev/null || true
+chmod -R 777 /app/collector/hotdir 2>/dev/null || true
+chmod -R 777 /app/collector/outputs 2>/dev/null || true
+
 # Check if STORAGE_DIR is set
 if [ -z "$STORAGE_DIR" ]; then
     echo "================================================================"
