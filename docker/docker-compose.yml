@@ -100,8 +100,10 @@ services:
     # Robust healthcheck: uses the root endpoint (always 200 once qdrant is
     # listening), 127.0.0.1 to avoid DNS resolution issues, and start_period
     # to give qdrant 30s to fully initialize before failures count.
+    # Uses bash /dev/tcp (not curl) because the qdrant image does not bundle
+    # curl, and wget is also missing in v1.7.4 -- bash is always available.
     healthcheck:
-      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:6333/ || exit 1"]
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/6333 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
