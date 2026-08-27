@@ -54,7 +54,7 @@ docker compose ps   # verificar tudo healthy
 
 URLs locais:
 - App: <http://localhost:3001>
-- Grafana: <http://localhost:3000> (admin/admin por default)
+- Grafana: <http://localhost:3030> (admin/admin por default; porta 3000 colide com Dokploy UI)
 - Prometheus: <http://localhost:9090>
 - Qdrant: <http://localhost:6333/dashboard>
 
