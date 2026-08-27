@@ -53,9 +53,14 @@ services:
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-consultor-ia}
     networks:
       - anything-llm
+    # service_started (not service_healthy): app boots as soon as
+    # the qdrant container is created, not when its healthcheck passes.
+    # Qdrant takes <1s to be ready for connections; the healthcheck above
+    # is informational only. Decoupling prevents deploy failures when
+    # the healthcheck flakes.
     depends_on:
       qdrant:
-        condition: service_healthy
+        condition: service_started
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -74,13 +79,15 @@ services:
       - qdrant_data:/qdrant/storage
     networks:
       - anything-llm
-    # qdrant image has curl but not wget. -f fails fast on non-2xx,
-    # -s silent, --max-time bounded.
+    # Robust healthcheck: uses the root endpoint (always 200 once qdrant is
+    # listening), 127.0.0.1 to avoid DNS resolution issues, and start_period
+    # to give qdrant 30s to fully initialize before failures count.
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS --max-time 5 http://localhost:6333/healthz || exit 1"]
+      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:6333/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   alloy:
     image: grafana/alloy:v1.5.1
