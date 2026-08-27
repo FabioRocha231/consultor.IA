@@ -91,8 +91,9 @@ services:
       - ../infra/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - alloy_data:/var/lib/alloy/data
     ports:
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP
+      - "4317:4317"   # OTLP gRPC (host reachable; useful for external OTLP clients)
+      # 4318 (OTLP HTTP) is container-internal only -- the app reaches Alloy
+      # via DNS name `alloy` on port 4318, no host mapping needed.
     networks:
       - anything-llm
     depends_on:
@@ -141,8 +142,9 @@ services:
       - ../infra/tempo/tempo.yaml:/etc/tempo.yaml:ro
       - tempo_data:/var/tempo
     ports:
-      - "3200:3200"   # HTTP query
-      - "4318:4318"   # OTLP HTTP (Alloy points here too; both bound to 4318 internally to Alloy->Tempo path)
+      - "3200:3200"   # HTTP query (host reachable; useful for debugging)
+      # 4318 (OTLP HTTP receiver) is container-internal only -- Alloy reaches
+      # Tempo via DNS name `tempo` on port 4318, no host mapping needed.
     networks:
       - anything-llm
 
