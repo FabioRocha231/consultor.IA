@@ -1,5 +1,19 @@
 name: anythingllm
 
+# Compose stack for consultor.IA single deployment.
+#
+# Postgres is provided externally by Dokploy as a managed service (use the
+# connection URL it gives you in DB_URL). Redis is not used in the pilot.
+# Everything else below is part of this compose: the app, Qdrant (vector DB),
+# and the observability stack (Alloy, Prometheus, Loki, Tempo, Grafana).
+#
+# To deploy on Dokploy:
+#   1. Create the Postgres database in the Dokploy UI and copy the URL.
+#   2. Point Dokploy at this repo / branch.
+#   3. Set the env vars (DB_URL, JWT_SECRET, ADMIN_EMAIL/ADMIN_PASSWORD,
+#      LLM_PROVIDER/LLM_PROVIDER_API_KEY) in the Dokploy service config.
+#   4. Deploy. Grafana will be at :3000, app at :3001.
+
 networks:
   anything-llm:
     driver: bridge
@@ -26,34 +40,105 @@ services:
       - "3001:3001"
     env_file:
       - .env
-    # Optional first-admin bootstrap. Set BOTH ADMIN_EMAIL and ADMIN_PASSWORD in
-    # docker/.env before the first boot. The seed is idempotent and ignores
-    # these values after an admin/manager already exists.
+    # Optional first-admin bootstrap. Set BOTH ADMIN_EMAIL and ADMIN_PASSWORD
+    # in docker/.env before the first boot. The seed is idempotent and
+    # ignores these values after an admin/manager already exists.
+    environment:
+      VECTOR_DB: ${VECTOR_DB:-qdrant}
+      QDRANT_ENDPOINT: ${QDRANT_ENDPOINT:-http://qdrant:6333}
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+      OTEL_SDK_DISABLED: ${OTEL_SDK_DISABLED:-false}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://alloy:4318}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-consultor-ia}
     networks:
       - anything-llm
     depends_on:
-      postgres:
+      qdrant:
         condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  postgres:
-    image: postgres:16-alpine
-    container_name: consultor-postgres
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    container_name: consultor-qdrant
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: consultor
-      POSTGRES_PASSWORD: consultor
-      POSTGRES_DB: consultor
+    ports:
+      - "6333:6333"
+      - "6334:6334"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - qdrant_data:/qdrant/storage
+    networks:
+      - anything-llm
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U consultor -d consultor"]
+      test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:6333/healthz"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  alloy:
+    image: grafana/alloy:v1.5.1
+    container_name: consultor-alloy
+    restart: unless-stopped
+    command: ["run", "/etc/alloy/config.alloy", "--storage.path=/var/lib/alloy/data"]
+    volumes:
+      - ../infra/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - alloy_data:/var/lib/alloy/data
     ports:
-      - "5432:5432"
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    networks:
+      - anything-llm
+    depends_on:
+      prometheus:
+        condition: service_started
+      loki:
+        condition: service_started
+      tempo:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: consultor-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ../infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - anything-llm
+
+  loki:
+    image: grafana/loki:3.3.2
+    container_name: consultor-loki
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - ../infra/loki/local-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - anything-llm
+
+  tempo:
+    image: grafana/tempo:2.6.0
+    container_name: consultor-tempo
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ../infra/tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"   # HTTP query
+      - "4318:4318"   # OTLP HTTP (Alloy points here too; both bound to 4318 internally to Alloy->Tempo path)
+    networks:
+      - anything-llm
 
   grafana:
     image: grafana/grafana:11.5.2
@@ -64,9 +149,6 @@ services:
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: "false"
-    volumes:
-      - "../infra/grafana/provisioning:/etc/grafana/provisioning"
-      - "../infra/grafana/dashboards:/etc/grafana/dashboards"
       GF_UNIFIED_ALERTING_ENABLED: "true"
       GF_ALERTING_ENABLED: "true"
       GF_SMTP_ENABLED: ${SMTP_ENABLED:-false}
@@ -78,24 +160,16 @@ services:
       ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-http://localhost:65534}
       ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-alerts@localhost}
     volumes:
-      - "../infra/grafana/provisioning:/etc/grafana/provisioning"
-      GF_UNIFIED_ALERTING_ENABLED: "true"
-      GF_ALERTING_ENABLED: "true"
-      GF_SMTP_ENABLED: ${SMTP_ENABLED:-false}
-      GF_SMTP_HOST: ${SMTP_HOST:-}
-      GF_SMTP_USER: ${SMTP_USER:-}
-      GF_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      GF_SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-alerts@consultor.local}
-      GF_SMTP_FROM_NAME: ${SMTP_FROM_NAME:-consultor.IA Alerts}
-      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-http://localhost:65534}
-      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-alerts@localhost}
-    volumes:
-      - "../infra/grafana/provisioning:/etc/grafana/provisioning"
-      - "../infra/grafana/dashboards:/etc/grafana/dashboards"
+      - ../infra/grafana/provisioning:/etc/grafana/provisioning
+      - ../infra/grafana/dashboards:/etc/grafana/dashboards
       - grafana_data:/var/lib/grafana
     networks:
       - anything-llm
 
 volumes:
-  postgres_data:
   grafana_data:
+  qdrant_data:
+  alloy_data:
+  prometheus_data:
+  loki_data:
+  tempo_data:

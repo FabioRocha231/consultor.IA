@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # App metrics flow app -> OTel SDK -> Alloy (OTLP/HTTP) -> Prometheus
+  # remote_write. Alloy exposes them at this path so Prometheus can scrape
+  # the Prometheus-flavored view. See infra/alloy/config.alloy.
+  - job_name: 'consultor-ia-alloy'
+    static_configs:
+      - targets: ['alloy:4318']
+    metrics_path: /api/v1/metrics/prometheus
