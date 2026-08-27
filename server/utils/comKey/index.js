@@ -50,16 +50,37 @@ class CommunicationKey {
       },
     });
 
-    if (!fs.existsSync(this.#storageLoc))
-      fs.mkdirSync(this.#storageLoc, { recursive: true });
-    fs.writeFileSync(
-      `${path.resolve(this.#storageLoc, this.#privKeyName)}`,
-      keyPair.privateKey
-    );
-    fs.writeFileSync(
-      `${path.resolve(this.#storageLoc, this.#pubKeyName)}`,
-      keyPair.publicKey
-    );
+    // Defensive: storage dir may be read-only on shared hosts (Dokploy
+    // bind-mounts root-owned). Try mkdir, fall back to a no-op so the
+    // boot continues. The writeFileSync calls below will throw if they
+    // truly cannot write; the caller (boot/index.js) will then crash
+    // with a clearer error than EACCES from mkdir.
+    if (!fs.existsSync(this.#storageLoc)) {
+      try {
+        fs.mkdirSync(this.#storageLoc, { recursive: true });
+      } catch (e) {
+        this.log(
+          "Could not create comkey dir; continuing without persisting RSA keys.",
+          e.code || e.message
+        );
+      }
+    }
+    // Wrap the file writes too so a missing dir does not crash boot.
+    try {
+      fs.writeFileSync(
+        `${path.resolve(this.#storageLoc, this.#privKeyName)}`,
+        keyPair.privateKey
+      );
+      fs.writeFileSync(
+        `${path.resolve(this.#storageLoc, this.#pubKeyName)}`,
+        keyPair.publicKey
+      );
+    } catch (e) {
+      this.log(
+        "Could not write RSA keys to disk; signing will fail at request time.",
+        e.code || e.message
+      );
+    }
     this.log(
       "RSA key pair generated for signed payloads within AnythingLLM services."
     );
