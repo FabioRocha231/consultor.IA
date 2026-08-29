@@ -396,6 +396,15 @@ const router = createBrowserRouter([
         },
       },
       {
+        path: "/settings/external-connections/whatsapp",
+        lazy: async () => {
+          const { default: WhatsAppBotSettings } = await import(
+            "@/pages/GeneralSettings/Connections/WhatsAppBot"
+          );
+          return { element: <AdminRoute Component={WhatsAppBotSettings} /> };
+        },
+      },
+      {
         path: "/settings/scheduled-jobs",
         lazy: async () => {
           const { default: ScheduledJobs } = await import(
