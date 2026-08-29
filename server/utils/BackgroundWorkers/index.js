@@ -41,6 +41,11 @@ class BackgroundService {
       timeout: "6m",
       interval: "9hr",
     },
+    {
+      name: "process-whatsapp-messages",
+      timeout: "2m",
+      interval: "5s",
+    },
   ];
 
   #memoryJobs = [
@@ -117,6 +122,11 @@ class BackgroundService {
         `Marked ${orphanedCount} orphaned scheduled job run(s) as failed`
       );
     }
+
+    const {
+      recoverStaleProcessing,
+    } = require("../../jobs/process-whatsapp-messages");
+    await recoverStaleProcessing();
 
     const jobsToRun = this.jobs();
 
