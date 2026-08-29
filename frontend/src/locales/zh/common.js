@@ -365,6 +365,7 @@ const TRANSLATIONS = {
     channels: "频道",
     "available-channels": {
       telegram: "电报",
+      whatsapp: "WhatsApp",
     },
     "scheduled-jobs": "计划好的任务",
     "model-router": "型号路由器",

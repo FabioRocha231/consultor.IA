@@ -378,6 +378,7 @@ const TRANSLATIONS = {
     channels: "Kanali",
     "available-channels": {
       telegram: "Telegram",
+      whatsapp: "WhatsApp",
     },
     "image-generation": "Generiranje slika",
   },

@@ -378,6 +378,7 @@ const TRANSLATIONS = {
     channels: "ຊ່ອງທາງການຕິດຕໍ່",
     "available-channels": {
       telegram: "Telegram",
+      whatsapp: "WhatsApp",
     },
     "image-generation": "ການສ້າງຮູບພາບ",
   },

@@ -368,6 +368,7 @@ const TRANSLATIONS = {
     channels: "Kaasavad",
     "available-channels": {
       telegram: "Telegram",
+      whatsapp: "WhatsApp",
     },
     "scheduled-jobs": "Planeeritud tööd",
     "model-router": "Mudel: reiting",

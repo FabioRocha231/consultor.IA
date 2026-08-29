@@ -352,6 +352,7 @@ const TRANSLATIONS = {
     channels: "Canais",
     "available-channels": {
       telegram: "Telegram",
+      whatsapp: "WhatsApp",
     },
     "scheduled-jobs": "Tarefas Agendadas",
     "model-router": "Roteador de modelo",

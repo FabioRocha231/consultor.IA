@@ -366,6 +366,7 @@ const TRANSLATIONS = {
     channels: "ערוצים",
     "available-channels": {
       telegram: "טלגרם",
+      whatsapp: "WhatsApp",
     },
     "scheduled-jobs": "משימות מתוכננות",
     "model-router": "מודל של נתב",
