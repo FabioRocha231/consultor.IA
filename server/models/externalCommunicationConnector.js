@@ -1,12 +1,47 @@
 const prisma = require("../utils/prisma");
 const { safeJsonParse } = require("../utils/http");
+const { encryptToken } = require("../utils/telegramBot/utils");
+
+const WHATSAPP_REQUIRED_FIELDS = [
+  "appSecret",
+  "phoneNumberId",
+  "accessToken",
+  "verifyToken",
+  "workspaceSlug",
+];
+const WHATSAPP_SECRET_FIELDS = ["appSecret", "accessToken", "verifyToken"];
 
 const ExternalCommunicationConnector = {
-  supportedTypes: ["telegram"],
+  supportedTypes: ["telegram", "whatsapp"],
+
+  /**
+   * Validate a connector config before persisting it.
+   * @param {'telegram'|'whatsapp'} type
+   * @param {object} config
+   * @returns {{valid: boolean, error: string|null}}
+   */
+  validateConfig: function (type, config = {}) {
+    if (!this.supportedTypes.includes(type))
+      return {
+        valid: false,
+        error: `Unsupported connector type: ${type}`,
+      };
+    if (type !== "whatsapp") return { valid: true, error: null };
+
+    const missing = WHATSAPP_REQUIRED_FIELDS.filter(
+      (field) => typeof config[field] !== "string" || !config[field].trim()
+    );
+    if (missing.length > 0)
+      return {
+        valid: false,
+        error: `Invalid whatsapp config. Missing: ${missing.join(", ")}`,
+      };
+    return { valid: true, error: null };
+  },
 
   /**
    * Get a connector by type.
-   * @param {'telegram'} type
+   * @param {'telegram'|'whatsapp'} type
    * @returns {Promise<{id: number, type: string, config: object, active: boolean}|null>}
    */
   get: async function (type) {
@@ -27,15 +62,52 @@ const ExternalCommunicationConnector = {
   },
 
   /**
+   * Get a connector by type, throwing on database failures instead of
+   * collapsing them into a missing connector.
+   * @param {'telegram'|'whatsapp'} type
+   * @returns {Promise<{id: number, type: string, config: object, active: boolean}|null>}
+   */
+  getStrict: async function (type) {
+    const connector = await prisma.external_communication_connectors.findUnique(
+      {
+        where: { type },
+      }
+    );
+    if (!connector) return null;
+    return {
+      ...connector,
+      config: safeJsonParse(connector.config, {}),
+    };
+  },
+
+  /**
    * Create or update a connector's config and active state.
-   * @param {'telegram'} type
+   * @param {'telegram'|'whatsapp'} type
    * @param {object} config
    * @param {boolean} active
    * @returns {Promise<{connector: object|null, error: string|null}>}
    */
-  upsert: async function (type, config = {}) {
+  upsert: async function (type, inputConfig = {}) {
     if (!this.supportedTypes.includes(type))
       return { connector: null, error: `Unsupported connector type: ${type}` };
+
+    const config = { ...inputConfig };
+    if (type === "whatsapp") {
+      const { valid, error } = this.validateConfig(type, config);
+      if (!valid) return { connector: null, error };
+
+      for (const field of WHATSAPP_SECRET_FIELDS) {
+        if (!config[field] || String(config[field]).startsWith("enc:"))
+          continue;
+        const encrypted = encryptToken(String(config[field]));
+        if (!encrypted)
+          return {
+            connector: null,
+            error: `Failed to encrypt whatsapp config field: ${field}`,
+          };
+        config[field] = encrypted;
+      }
+    }
 
     try {
       let update = {},
@@ -76,7 +148,7 @@ const ExternalCommunicationConnector = {
 
   /**
    * Merge partial config updates into an existing connector.
-   * @param {'telegram'} type
+   * @param {'telegram'|'whatsapp'} type
    * @param {object} configUpdates - Partial config to merge.
    * @returns {Promise<{connector: object|null, error: string|null}>}
    */
@@ -91,7 +163,7 @@ const ExternalCommunicationConnector = {
 
   /**
    * Delete a connector entirely.
-   * @param {'telegram'} type
+   * @param {'telegram'|'whatsapp'} type
    * @returns {Promise<boolean>}
    */
   delete: async function (type) {
@@ -107,4 +179,7 @@ const ExternalCommunicationConnector = {
   },
 };
 
-module.exports = { ExternalCommunicationConnector };
+module.exports = {
+  ExternalCommunicationConnector,
+  WHATSAPP_SECRET_FIELDS,
+};

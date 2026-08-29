@@ -9,7 +9,8 @@
     "generativelanguage.googleapis.com",
     "api.mistral.ai",
     "api.cohere.ai",
-    "openrouter.ai"
+    "openrouter.ai",
+    "graph.facebook.com"
   ],
   "wildcards": []
 }

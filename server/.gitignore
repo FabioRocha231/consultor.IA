@@ -26,7 +26,8 @@ logs/server.log
 *.db-journal
 storage/lancedb
 public/
-__tests__/**/models
+__tests__/**/models/*
+!__tests__/models/externalCommunicationConnector.test.js
 
 # For legacy copies of repo
 documents

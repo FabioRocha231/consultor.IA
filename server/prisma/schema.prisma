@@ -477,6 +477,24 @@ model external_communication_connectors {
   lastUpdatedAt DateTime @default(now())
 }
 
+model whatsapp_webhook_messages {
+  id            Int      @id @default(autoincrement())
+  messageId     String   @unique
+  phoneNumberId String
+  waId          String
+  payload       String
+  status        String   @default("queued")
+  attempts      Int      @default(0)
+  claimedAt     DateTime?
+  availableAt   DateTime?
+  failedAt      DateTime?
+  lastError     String?
+  createdAt     DateTime @default(now())
+  processedAt   DateTime?
+
+  @@index([status, createdAt])
+}
+
 model scheduled_jobs {
   id        Int                  @id @default(autoincrement())
   name      String
