@@ -367,6 +367,7 @@ const TRANSLATIONS = {
     channels: "채널",
     "available-channels": {
       telegram: "텔레그램",
+      whatsapp: "WhatsApp",
     },
     "scheduled-jobs": "예정된 작업",
     "model-router": "모델 라우터",

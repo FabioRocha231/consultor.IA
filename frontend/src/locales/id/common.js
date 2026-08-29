@@ -379,6 +379,7 @@ const TRANSLATIONS = {
     channels: "Saluran",
     "available-channels": {
       telegram: "Telegram",
+      whatsapp: "WhatsApp",
     },
     "image-generation": "Pembuatan Gambar",
   },

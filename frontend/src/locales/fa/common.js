@@ -370,6 +370,7 @@ const TRANSLATIONS = {
     channels: "کانال‌ها",
     "available-channels": {
       telegram: "تلگرام",
+      whatsapp: "WhatsApp",
     },
     "scheduled-jobs": "وظایف برنامه‌ریزی شده",
     "model-router": "روتر نمونه",

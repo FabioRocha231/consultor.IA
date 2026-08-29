@@ -196,6 +196,9 @@ export default {
     telegram: () => {
       return `/settings/external-connections/telegram`;
     },
+    whatsapp: () => {
+      return `/settings/external-connections/whatsapp`;
+    },
     scheduledJobs: () => {
       return `/settings/scheduled-jobs`;
     },

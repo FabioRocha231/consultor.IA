@@ -355,6 +355,12 @@ const SidebarOptions = ({ user = null, t }) => (
               flex: true,
               hidden: !!user,
             },
+            {
+              btnText: t("settings.available-channels.whatsapp"),
+              href: paths.settings.whatsapp(),
+              flex: true,
+              hidden: !!user,
+            },
           ]}
         />
         <Option

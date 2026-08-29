@@ -360,6 +360,7 @@ const TRANSLATIONS = {
     channels: "Channels",
     "available-channels": {
       telegram: "Telegram",
+      whatsapp: "WhatsApp",
     },
   },
   login: {
