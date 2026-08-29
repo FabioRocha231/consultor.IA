@@ -1899,6 +1899,58 @@ const TRANSLATIONS = {
       unknown: "Necunoscut",
     },
   },
+  whatsapp: {
+    title: "WhatsApp Bot",
+    description:
+      "Connect your consultor.IA instance to WhatsApp so you can chat with your workspaces from any device.",
+    setup: {
+      fields: {
+        phoneNumberId: {
+          label: "Phone Number ID",
+          placeholder: "e.g. 123456789012345",
+          help: "Your WhatsApp phone number ID is in the Meta App Dashboard.",
+        },
+        workspaceSlug: {
+          label: "Workspace Slug",
+          placeholder: "e.g. my-workspace",
+          help: "Choose the workspace where WhatsApp messages should be delivered.",
+        },
+        verifyToken: {
+          label: "Verify Token",
+          placeholder: "Enter your webhook verify token",
+          help: "Use the same verify token you set for the Meta webhook.",
+        },
+        appSecret: {
+          label: "App Secret",
+          placeholder: "Enter your Meta app secret",
+          help: "Find it in Meta App Settings > Basic.",
+        },
+        accessToken: {
+          label: "Access Token",
+          placeholder: "Enter your permanent access token",
+          help: "Generate a permanent token in the WhatsApp Cloud API setup.",
+        },
+      },
+      submit: "Connect WhatsApp",
+      "toast-connect-success": "WhatsApp connected successfully.",
+      "toast-connect-failed": "Failed to connect WhatsApp.",
+    },
+    connected: {
+      "status-connected": "Connected",
+      "status-disconnected": "Disconnected",
+      "phone-number": "Phone Number ID",
+      workspace: "Workspace",
+      "webhook-url": "Webhook URL",
+      "webhook-url-help":
+        "Add this URL to your Meta WhatsApp webhook configuration.",
+      "copy-url": "Copy URL",
+      copied: "Copied",
+      disconnect: "Disconnect",
+      "toast-disconnect-success": "WhatsApp disconnected.",
+      "toast-disconnect-failed": "Failed to disconnect WhatsApp.",
+      "toast-copy-failed": "Failed to copy webhook URL.",
+    },
+  },
   scheduledJobs: {
     title: "Sarcini programate",
     enableNotifications:
