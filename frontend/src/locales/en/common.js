@@ -386,6 +386,40 @@ const TRANSLATIONS = {
       price: "Price",
       actions: "Actions",
     },
+    orders: {
+      label: "Orders",
+      description: "Manage orders received through WhatsApp.",
+      status: {
+        pending: "Awaiting payment",
+        confirmed: "Confirmed",
+        preparing: "Preparing",
+        ready: "Ready",
+        delivered: "Delivered",
+        cancelled: "Cancelled",
+      },
+      fields: {
+        orderId: "Order",
+        customerName: "Customer",
+        customerPhone: "Phone",
+        status: "Status",
+        totalCents: "Total (cents)",
+        items: "Items",
+        quantity: "Quantity",
+        notes: "Notes",
+        createdAt: "Created at",
+      },
+      empty: "No orders registered.",
+      loading: "Loading orders",
+      actions: {
+        updateStatus: "Update status",
+        cancel: "Cancel",
+      },
+      errors: {
+        invalidTransition: "Invalid status transition.",
+        idempotencyKeyRequired: "Idempotency-Key header is required.",
+      },
+      filterByStatus: "Filter by status",
+    },
   },
   login: {
     "multi-user": {

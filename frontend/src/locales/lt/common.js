@@ -338,6 +338,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "Sistemos nustatymai",
     invites: "Pakvietimai",
     users: "Vartotojai",

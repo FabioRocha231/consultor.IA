@@ -331,6 +331,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "インスタンス設定",
     invites: "招待",
     users: "ユーザー",

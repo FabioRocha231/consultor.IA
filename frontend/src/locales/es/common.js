@@ -332,6 +332,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "Ajustes de la instancia",
     invites: "Invitaciones",
     users: "Usuarios",

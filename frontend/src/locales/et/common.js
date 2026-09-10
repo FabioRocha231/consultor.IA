@@ -331,6 +331,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "Instantsi seaded",
     invites: "Kutsed",
     users: "Kasutajad",

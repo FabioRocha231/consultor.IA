@@ -333,6 +333,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "تنظیمات سامانه",
     invites: "دعوت‌نامه‌ها",
     users: "کاربران",

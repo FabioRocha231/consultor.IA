@@ -331,6 +331,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "Instances iestatījumi",
     invites: "Ielūgumi",
     users: "Lietotāji",
