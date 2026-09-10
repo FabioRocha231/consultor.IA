@@ -46,6 +46,7 @@ const {
   runOnce,
   recoverStaleProcessing,
   createWatchdog,
+  runPollLoop,
 } = require("../../jobs/process-whatsapp-messages");
 const { INTERACTIVE_MARKER } = require("../../integrations/whatsapp/interactive");
 
@@ -365,5 +366,22 @@ describe("process whatsapp messages job", () => {
     clearTimeout(timer);
 
     expect(onTimeout).toHaveBeenCalledTimes(1);
+  });
+
+  test("poll loop stops when its abort signal fires", async () => {
+    const controller = new AbortController();
+    let iterations = 0;
+
+    await runPollLoop({
+      signal: controller.signal,
+      pollIntervalMs: 1,
+      run: async ({ batchSize }) => {
+        iterations += 1;
+        if (iterations >= 2) controller.abort();
+        return { processed: 0, total: batchSize };
+      },
+    });
+
+    expect(iterations).toBe(2);
   });
 });
