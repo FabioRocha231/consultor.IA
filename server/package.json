@@ -15,7 +15,8 @@
     "lint": "eslint --fix .",
     "lint:check": "eslint .",
     "swagger": "node ./swagger/init.js",
-    "eval:live": "node scripts/eval-live.js"
+    "eval:live": "node scripts/eval-live.js",
+    "seed:menu": "node scripts/seed-menu.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
