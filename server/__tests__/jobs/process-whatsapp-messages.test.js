@@ -24,6 +24,8 @@ jest.mock("../../utils/chats/apiChatHandler", () => ({
 }));
 jest.mock("../../integrations/whatsapp/client", () => ({
   sendWhatsAppText: jest.fn(),
+  sendWhatsAppList: jest.fn(),
+  sendWhatsAppButtons: jest.fn(),
 }));
 jest.mock("../../utils/telegramBot/utils", () => ({
   decryptToken: jest.fn((value) => value),
@@ -37,12 +39,15 @@ const { Workspace } = require("../../models/workspace");
 const { ApiChatHandler } = require("../../utils/chats/apiChatHandler");
 const {
   sendWhatsAppText,
+  sendWhatsAppList,
+  sendWhatsAppButtons,
 } = require("../../integrations/whatsapp/client");
 const {
   runOnce,
   recoverStaleProcessing,
   createWatchdog,
 } = require("../../jobs/process-whatsapp-messages");
+const { INTERACTIVE_MARKER } = require("../../integrations/whatsapp/interactive");
 
 function queuedRow(overrides = {}) {
   return {
@@ -218,6 +223,84 @@ describe("process whatsapp messages job", () => {
       }),
     });
     expect(Workspace.get).not.toHaveBeenCalled();
+  });
+
+  test("sends an interactive list returned by chatSync instead of the marker text", async () => {
+    const row = queuedRow();
+    row.payload = JSON.stringify({
+      phoneNumberId: "phone-1",
+      waId: "wa-1",
+      message: {
+        id: "message-interactive",
+        from: "wa-1",
+        type: "interactive",
+        interactive: {
+          type: "list_reply",
+          list_reply: { id: "1", title: "Margherita" },
+        },
+        text: { body: "Margherita" },
+      },
+    });
+    setupRun(row);
+    Workspace.get.mockResolvedValue({ id: 1, slug: "workspace" });
+    const interactive = {
+      type: "list",
+      headerText: "Cardápio",
+      bodyText: "Escolha uma opção",
+      footerText: "Toque em uma opção",
+      buttonLabel: "Ver cardápio",
+      sections: [],
+    };
+    ApiChatHandler.chatSync.mockResolvedValue({
+      textResponse: `${INTERACTIVE_MARKER}${JSON.stringify({
+        text: "fallback",
+        interactive,
+      })}`,
+    });
+    sendWhatsAppList.mockResolvedValue({ status: 200, body: "ok" });
+
+    const result = await runOnce();
+
+    expect(result).toEqual({ processed: 1, total: 1 });
+    expect(ApiChatHandler.chatSync).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "Margherita" })
+    );
+    expect(sendWhatsAppList).toHaveBeenCalledWith({
+      phoneNumberId: "phone-1",
+      accessToken: "access-token",
+      to: "wa-1",
+      ...interactive,
+    });
+    expect(sendWhatsAppText).not.toHaveBeenCalled();
+  });
+
+  test("sends an interactive button payload returned by chatSync", async () => {
+    const row = queuedRow();
+    setupRun(row);
+    Workspace.get.mockResolvedValue({ id: 1, slug: "workspace" });
+    const interactive = {
+      type: "button",
+      bodyText: "Confirme seu pedido",
+      footerText: "Escolha uma ação",
+      buttons: [],
+    };
+    ApiChatHandler.chatSync.mockResolvedValue({
+      textResponse: `${INTERACTIVE_MARKER}${JSON.stringify({
+        text: "fallback",
+        interactive,
+      })}`,
+    });
+    sendWhatsAppButtons.mockResolvedValue({ status: 200, body: "ok" });
+
+    await runOnce();
+
+    expect(sendWhatsAppButtons).toHaveBeenCalledWith({
+      phoneNumberId: "phone-1",
+      accessToken: "access-token",
+      to: "wa-1",
+      ...interactive,
+    });
+    expect(sendWhatsAppText).not.toHaveBeenCalled();
   });
 
   test("recovers stale processing rows", async () => {

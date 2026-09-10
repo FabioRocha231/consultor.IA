@@ -498,6 +498,37 @@ describe("whatsapp endpoints", () => {
     expect(response.sendStatus).toHaveBeenCalledWith(200);
   });
 
+  test("persists interactive replies with a virtual text body for the agent", async () => {
+    const handlers = registerEndpoints();
+    const response = mockResponse();
+
+    await handlers["POST /whatsapp/webhook"](
+      webhookRequest(
+        webhookBody({
+          type: "interactive",
+          interactive: {
+            type: "list_reply",
+            list_reply: {
+              id: "1",
+              title: "Margherita",
+              description: "R$ 45,90",
+            },
+          },
+        })
+      ),
+      response
+    );
+
+    expect(prisma.whatsapp_webhook_messages.createMany).toHaveBeenCalled();
+    const saved = JSON.parse(
+      prisma.whatsapp_webhook_messages.createMany.mock.calls[0][0].data[0]
+        .payload
+    );
+    expect(saved.message.type).toBe("interactive");
+    expect(saved.message.interactive.list_reply.title).toBe("Margherita");
+    expect(saved.message.text.body).toBe("Margherita");
+  });
+
   test("persists unsupported message types as queued", async () => {
     const handlers = registerEndpoints();
     const response = mockResponse();

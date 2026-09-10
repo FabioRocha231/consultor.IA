@@ -1,6 +1,7 @@
 const { createLead } = require("./createLead");
 const { requestHumanSupport } = require("./requestHumanSupport");
 const { getMenu } = require("./getMenu");
+const { getMenuInteractive } = require("./getMenuInteractive");
 const { createOrder } = require("./createOrder");
 const { getOrderStatus } = require("./getOrderStatus");
 const { listMyOrders } = require("./listMyOrders");
@@ -36,6 +37,7 @@ const n8nTools = {
     toAibitatPlugin(createLead),
     toAibitatPlugin(requestHumanSupport),
     toAibitatPlugin(getMenu),
+    toAibitatPlugin(getMenuInteractive),
     toAibitatPlugin(createOrder),
     toAibitatPlugin(getOrderStatus),
     toAibitatPlugin(listMyOrders),
@@ -48,6 +50,7 @@ module.exports = {
   createLead,
   requestHumanSupport,
   getMenu,
+  getMenuInteractive,
   createOrder,
   getOrderStatus,
   listMyOrders,
