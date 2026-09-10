@@ -86,6 +86,60 @@ interface QdrantSearchResponse {
 - Timeout e retry: definir no client (alvo 5s / 1 retry para read).
 - Observability: spans `qdrant.search`, `qdrant.upsert` e metrics `qdrant_*`.
 
+## consultor.IA <-> WhatsApp Cloud API
+
+Fase Empresa A adicionou contratos WhatsApp para reduzir texto livre do cliente
+final. O agente devolve uma resposta marcada; o worker converte para interactive
+message e envia pela Cloud API `v23.0`.
+
+### Tools e clients
+
+- `getMenuInteractive`: variante WhatsApp do `getMenu`; retorna o mesmo texto
+  legível mais um descriptor `{"type":"list", ...}` com seções por categoria.
+- `sendWhatsAppList` / `sendWhatsAppButtons`: clientes em
+  `server/integrations/whatsapp/client.js` para `POST
+  /v23.0/<phoneNumberId>/messages` com `type: "interactive"`.
+- `buildOrderConfirmationPayload`: descriptor `{"type":"button", ...}` de
+  Confirmar/Cancelar/Editar.
+- `extractWhatsAppMessages` normaliza `list_reply` e `button_reply` para
+  `message.text.body`, então o fluxo existente do agente continua baseado em
+  texto.
+
+### INTERACTIVE_MARKER
+
+```typescript
+const INTERACTIVE_MARKER = "__INTERACTIVE__:";
+
+interface InteractiveToolResponse {
+  text: string;                    // fallback legível
+  interactive: {
+    type: "list" | "button";
+    headerText?: string;
+    bodyText: string;
+    footerText?: string;
+    buttonLabel?: string;          // list
+    sections?: Array<{ title: string; rows: Array<{ id: string; title: string; description?: string }> }>;
+    buttons?: Array<{ type: "reply"; reply: { id: string; title: string } }>;
+  };
+}
+```
+
+O tool marca `skipHandleExecution = true` para não continuar o loop do agente
+depois de devolver `INTERACTIVE_MARKER + JSON`.
+
+### Limites da Cloud API
+
+| Limite | Valor |
+| --- | --- |
+| Sections de lista | 10 |
+| Rows por section | 10 |
+| Botões reply | 3 |
+| Título section/row | 24 chars |
+| Descrição row | 72 chars |
+| Header/body/footer | 60 / 1024 / 60 chars |
+| Label do botão de lista | 20 chars |
+| Título de botão reply | 20 chars |
+
 ## consultor.IA <-> LLM Provider
 
 - Usar connectors existentes (`server/utils/AiProviders/*`, `server/utils/agents/aibitat/providers/*`) e OpenAI-compatible API onde possível.
