@@ -331,6 +331,7 @@ const TRANSLATIONS = {
     refresh: "Reîmprospătează",
   },
   settings: {
+    menu: null,
     title: "Setările instanței",
     invites: "Invitații",
     users: "Utilizatori",

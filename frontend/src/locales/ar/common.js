@@ -329,6 +329,7 @@ const TRANSLATIONS = {
     refresh: "استعيد/جدد",
   },
   settings: {
+    menu: null,
     title: "إعدادات المثيل",
     invites: "دعوات",
     users: "مستعملون",

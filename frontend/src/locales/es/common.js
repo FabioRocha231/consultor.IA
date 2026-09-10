@@ -331,6 +331,7 @@ const TRANSLATIONS = {
     refresh: "Renovar; revitalizar",
   },
   settings: {
+    menu: null,
     title: "Ajustes de la instancia",
     invites: "Invitaciones",
     users: "Usuarios",

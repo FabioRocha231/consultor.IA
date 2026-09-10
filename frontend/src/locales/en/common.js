@@ -362,6 +362,30 @@ const TRANSLATIONS = {
       telegram: "Telegram",
       whatsapp: "WhatsApp",
     },
+    menu: {
+      label: "Menu",
+      description: "Manage the restaurant menu items.",
+      items: {
+        new: "New item",
+        edit: "Edit item",
+      },
+      fields: {
+        category: "Category",
+        name: "Name",
+        description: "Description",
+        priceCents: "Price (in cents)",
+        currency: "Currency",
+        available: "Available",
+        position: "Position",
+        allergens: "Allergens (free text)",
+        photoUrl: "Photo URL",
+      },
+      empty: "No menu items registered.",
+      confirmDelete: "Delete this item?",
+      loading: "Loading",
+      price: "Price",
+      actions: "Actions",
+    },
   },
   login: {
     "multi-user": {

@@ -405,6 +405,15 @@ const router = createBrowserRouter([
         },
       },
       {
+        path: "/settings/menu",
+        lazy: async () => {
+          const { default: MenuSettings } = await import(
+            "@/pages/GeneralSettings/Menu"
+          );
+          return { element: <SingleUserRoute Component={MenuSettings} /> };
+        },
+      },
+      {
         path: "/settings/scheduled-jobs",
         lazy: async () => {
           const { default: ScheduledJobs } = await import(

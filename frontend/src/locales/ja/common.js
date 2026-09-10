@@ -330,6 +330,7 @@ const TRANSLATIONS = {
     refresh: "リフレッシュ",
   },
   settings: {
+    menu: null,
     title: "インスタンス設定",
     invites: "招待",
     users: "ユーザー",

@@ -338,6 +338,7 @@ const TRANSLATIONS = {
     goToWorkspace: 'ໄປທີ່ "{{workspace}}"',
   },
   settings: {
+    menu: null,
     title: "ການຕັ້ງຄ່າລະບົບ",
     invites: "ການເຊື້ອເຊີນ",
     users: "ຜູ້ໃຊ້",

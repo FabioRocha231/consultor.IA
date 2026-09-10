@@ -331,6 +331,7 @@ const TRANSLATIONS = {
     refresh: "Tái tạo",
   },
   settings: {
+    menu: null,
     title: "Cài đặt hệ thống",
     invites: "Lời mời",
     users: "Người dùng",

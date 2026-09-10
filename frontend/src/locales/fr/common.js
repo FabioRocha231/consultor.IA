@@ -330,6 +330,7 @@ const TRANSLATIONS = {
     refresh: "Rafraîchir",
   },
   settings: {
+    menu: null,
     title: "Paramètres de l'instance",
     invites: "Invitation",
     users: "Utilisateurs",

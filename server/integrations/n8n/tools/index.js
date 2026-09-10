@@ -1,5 +1,6 @@
 const { createLead } = require("./createLead");
 const { requestHumanSupport } = require("./requestHumanSupport");
+const { getMenu } = require("./getMenu");
 
 function toAibitatPlugin(tool) {
   return {
@@ -27,7 +28,11 @@ const n8nTools = {
   startupConfig: {
     params: {},
   },
-  plugin: [toAibitatPlugin(createLead), toAibitatPlugin(requestHumanSupport)],
+  plugin: [
+    toAibitatPlugin(createLead),
+    toAibitatPlugin(requestHumanSupport),
+    toAibitatPlugin(getMenu),
+  ],
 };
 
-module.exports = { n8nTools, createLead, requestHumanSupport };
+module.exports = { n8nTools, createLead, requestHumanSupport, getMenu };

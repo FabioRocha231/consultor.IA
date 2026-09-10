@@ -330,6 +330,7 @@ const TRANSLATIONS = {
     refresh: "Обновить",
   },
   settings: {
+    menu: null,
     title: "Настройки экземпляра",
     invites: "Приглашение",
     users: "Пользователи",
