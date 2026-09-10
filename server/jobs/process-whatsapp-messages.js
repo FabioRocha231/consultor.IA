@@ -30,6 +30,22 @@ const PERMANENT_ERROR_PATTERNS = [
   /WhatsApp Cloud API returned HTTP (400|401|403|404)/,
 ];
 
+const POLL_INTERVAL_MS = Number(process.env.WHATSAPP_WORKER_POLL_MS) || 5_000;
+const RUN_ON_STARTUP = process.env.WHATSAPP_WORKER_SKIP_STARTUP !== "1";
+const MAX_CONSECUTIVE_ERRORS = 10;
+const ERROR_BACKOFF_MS = 30_000;
+
+let shouldStop = false;
+const stopController = new AbortController();
+process.on("SIGTERM", () => {
+  shouldStop = true;
+  stopController.abort();
+});
+process.on("SIGINT", () => {
+  shouldStop = true;
+  stopController.abort();
+});
+
 function sanitizeError(error) {
   return String(error?.message || error).slice(0, 200);
 }
@@ -55,6 +71,23 @@ function createWatchdog(
   const timer = setTimeout(onTimeout, timeoutMs);
   if (typeof timer.unref === "function") timer.unref();
   return timer;
+}
+
+function sleep(ms, signal) {
+  return new Promise((resolve) => {
+    if (signal?.aborted) return resolve();
+
+    const onAbort = () => {
+      clearTimeout(timer);
+      resolve();
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    if (typeof timer.unref === "function") timer.unref();
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
 }
 
 function isPermanentFailure(error) {
@@ -294,18 +327,61 @@ async function runOnce({ batchSize = BATCH_SIZE } = {}) {
   return { processed, total: rows.length };
 }
 
-async function main({ timeoutMs = WATCHDOG_TIMEOUT_MS } = {}) {
-  const watchdog = createWatchdog(timeoutMs);
-  try {
-    const result = await runOnce();
-    if (result.processed > 0)
-      log(`Processed ${result.processed} of ${result.total} WhatsApp messages`);
-  } catch (error) {
-    log(`WhatsApp queue job failed: ${sanitizeError(error)}`);
-  } finally {
-    clearTimeout(watchdog);
-    conclude();
+async function runPollLoop({
+  signal = stopController.signal,
+  timeoutMs = WATCHDOG_TIMEOUT_MS,
+  pollIntervalMs = POLL_INTERVAL_MS,
+  errorBackoffMs = ERROR_BACKOFF_MS,
+  run = runOnce,
+} = {}) {
+  let consecutiveErrors = 0;
+  let hasRun = false;
+
+  while (!shouldStop && !signal?.aborted) {
+    let watchdog;
+    try {
+      watchdog = createWatchdog(timeoutMs);
+      if (RUN_ON_STARTUP || hasRun) {
+        const result = await run({ batchSize: BATCH_SIZE });
+        if (result.processed > 0) {
+          log(
+            `Processed ${result.processed} of ${result.total} WhatsApp messages`
+          );
+          consecutiveErrors = 0;
+        }
+      }
+      clearTimeout(watchdog);
+    } catch (error) {
+      clearTimeout(watchdog);
+      log(`WhatsApp queue iteration failed: ${sanitizeError(error)}`);
+      consecutiveErrors += 1;
+      if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+        log(`Aborting: ${consecutiveErrors} consecutive errors`);
+        return { abortedByErrors: true };
+      }
+      await sleep(errorBackoffMs, signal);
+      continue;
+    }
+
+    hasRun = true;
+    if (shouldStop || signal?.aborted) break;
+    await sleep(pollIntervalMs, signal);
   }
+
+  return { abortedByErrors: false };
+}
+
+async function main({ timeoutMs = WATCHDOG_TIMEOUT_MS } = {}) {
+  log(`WhatsApp worker started (poll=${POLL_INTERVAL_MS}ms)`);
+  await recoverStaleProcessing();
+
+  if (!RUN_ON_STARTUP)
+    log("Skipping initial run per WHATSAPP_WORKER_SKIP_STARTUP");
+
+  const { abortedByErrors } = await runPollLoop({ timeoutMs });
+  log("WhatsApp worker stopped");
+  if (abortedByErrors) process.exit(1);
+  conclude();
 }
 
 if (require.main === module) main();
@@ -319,6 +395,7 @@ module.exports = {
   createWatchdog,
   parseInteractiveResponse,
   isPermanentFailure,
+  runPollLoop,
   MAX_ATTEMPTS,
   RETRY_DELAYS_MS,
 };

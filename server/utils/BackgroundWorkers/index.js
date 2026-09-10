@@ -43,8 +43,8 @@ class BackgroundService {
     },
     {
       name: "process-whatsapp-messages",
-      timeout: "2m",
-      interval: "5s",
+      timeout: 0, // starts on boot, no recurring interval
+      start: true,
     },
   ];
 
