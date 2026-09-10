@@ -1,4 +1,20 @@
 /* eslint-env jest, node */
+jest.mock("@opentelemetry/api", () => {
+  const valueAddFn = jest.fn();
+  return {
+    metrics: {
+      getMeter: jest.fn(() => ({
+        createCounter: jest.fn(() => ({
+          add: valueAddFn,
+        })),
+      })),
+    },
+    __valueAddFn: valueAddFn,
+  };
+});
+
+const otel = require("@opentelemetry/api");
+const { __valueAddFn: valueAddFn } = otel;
 const {
   sendWhatsAppText,
   sendWhatsAppList,
@@ -7,6 +23,7 @@ const {
 
 describe("whatsapp cloud api client", () => {
   beforeEach(() => {
+    valueAddFn.mockClear();
     global.fetch = jest.fn();
   });
 
@@ -220,5 +237,75 @@ describe("whatsapp cloud api client", () => {
         },
       },
     });
+  });
+
+  test("sendWhatsAppList increments whatsapp_interactive_sent_total{type=list}", async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      text: jest.fn().mockResolvedValue("ok"),
+    });
+
+    await sendWhatsAppList({
+      phoneNumberId: "phone-1",
+      accessToken: "access-token",
+      to: "wa-1",
+      headerText: "Cardápio",
+      bodyText: "Escolha uma opção",
+      footerText: "Toque em uma opção",
+      buttonLabel: "Ver cardápio",
+      sections: [
+        {
+          title: "Pizzas",
+          rows: [{ id: "1", title: "Margherita" }],
+        },
+      ],
+    });
+
+    expect(valueAddFn).toHaveBeenCalledWith(1, { type: "list" });
+  });
+
+  test("sendWhatsAppButtons increments whatsapp_interactive_sent_total{type=button}", async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      text: jest.fn().mockResolvedValue("ok"),
+    });
+
+    await sendWhatsAppButtons({
+      phoneNumberId: "phone-1",
+      accessToken: "access-token",
+      to: "wa-1",
+      bodyText: "Confirme seu pedido",
+      buttons: [
+        { type: "reply", reply: { id: "confirm_1", title: "Confirmar" } },
+      ],
+    });
+
+    expect(valueAddFn).toHaveBeenCalledWith(1, { type: "button" });
+  });
+
+  test("sendWhatsAppList does NOT increment counter on error", async () => {
+    global.fetch.mockRejectedValueOnce(new Error("network"));
+
+    await expect(
+      sendWhatsAppList({
+        phoneNumberId: "phone-1",
+        accessToken: "access-token",
+        to: "wa-1",
+        headerText: "Cardápio",
+        bodyText: "Escolha uma opção",
+        footerText: "Toque em uma opção",
+        buttonLabel: "Ver cardápio",
+        sections: [
+          {
+            title: "Pizzas",
+            rows: [{ id: "1", title: "Margherita" }],
+          },
+        ],
+      })
+    ).rejects.toThrow("network");
+
+    expect(valueAddFn).not.toHaveBeenCalled();
   });
 });

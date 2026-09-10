@@ -1,6 +1,16 @@
+const { metrics } = require("@opentelemetry/api");
+
 const GRAPH_API_BASE = "https://graph.facebook.com";
 const GRAPH_API_VERSION = "v23.0";
 const DEFAULT_TIMEOUT_MS = 10000;
+
+const WHATSAPP_SCOPE = "consultor-ia.whatsapp";
+
+const whatsappInteractiveSentTotal = metrics
+  .getMeter(WHATSAPP_SCOPE)
+  .createCounter("whatsapp_interactive_sent_total", {
+    description: "WhatsApp interactive messages successfully sent",
+  });
 
 /**
  * Send a text message through the WhatsApp Cloud API.
@@ -105,7 +115,7 @@ async function sendWhatsAppList({
   sections,
   timeoutMs = DEFAULT_TIMEOUT_MS,
 }) {
-  return sendInteractive({
+  const { status, body } = await sendInteractive({
     phoneNumberId,
     accessToken,
     to,
@@ -118,6 +128,8 @@ async function sendWhatsAppList({
       action: { button: buttonLabel, sections },
     },
   });
+  whatsappInteractiveSentTotal.add(1, { type: "list" });
+  return { status, body };
 }
 
 /**
@@ -143,13 +155,15 @@ async function sendWhatsAppButtons({
   if (headerText) interactive.header = { type: "text", text: headerText };
   if (footerText) interactive.footer = { text: footerText };
 
-  return sendInteractive({
+  const { status, body } = await sendInteractive({
     phoneNumberId,
     accessToken,
     to,
     timeoutMs,
     interactive,
   });
+  whatsappInteractiveSentTotal.add(1, { type: "button" });
+  return { status, body };
 }
 
 module.exports = { sendWhatsAppText, sendWhatsAppList, sendWhatsAppButtons };
