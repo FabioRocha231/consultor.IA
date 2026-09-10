@@ -89,4 +89,38 @@ describe("createOrder tool", () => {
 
     expect(result).toContain("Falha ao criar pedido");
   });
+  test("returns an interactive marker with button payload after creating an order", async () => {
+    Order.create.mockResolvedValue({
+      order: {
+        id: 42,
+        customerName: "Joana",
+        customerPhone: "11999999999",
+        totalCents: 4590,
+        items: [{ menuItemId: 1, quantity: 1 }],
+      },
+      error: null,
+    });
+    aibitat.super.skipHandleExecution = false;
+
+    const result = await createOrder.handler.call(aibitat, {
+      customerPhone: "11999999999",
+      customerName: "Joana",
+      items: [{ menuItemId: 1, quantity: 1 }],
+    });
+
+    expect(typeof result).toBe("string");
+    expect(result.startsWith("__INTERACTIVE__:")).toBe(true);
+    expect(aibitat.super.skipHandleExecution).toBe(true);
+
+    const decoded = JSON.parse(result.slice("__INTERACTIVE__:".length));
+    expect(decoded.text).toContain("Pedido #42");
+    expect(decoded.interactive.type).toBe("button");
+    expect(Array.isArray(decoded.interactive.buttons)).toBe(true);
+    expect(decoded.interactive.buttons).toHaveLength(3);
+    expect(decoded.interactive.buttons.map((b) => b.reply.id)).toEqual([
+      "confirm_42",
+      "cancel_42",
+      "edit_42",
+    ]);
+  });
 });
