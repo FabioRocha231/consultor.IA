@@ -1,36 +1,10 @@
 const { Order, DEFAULT_ORGANIZATION_ID } = require("../../../models/orders");
 const { ROLES } = require("../../../utils/middleware/multiUserProtected");
-const { sendWhatsAppText } = require("../../whatsapp/client");
-const {
-  ExternalCommunicationConnector,
-  WHATSAPP_SECRET_FIELDS,
-} = require("../../../models/externalCommunicationConnector");
-const { decryptToken } = require("../../../utils/telegramBot/utils");
 
 const { resolveOrganizationContext } = require("./context");
-
-function decryptWhatsAppConfig(config = {}) {
-  const decrypted = { ...config };
-  for (const field of WHATSAPP_SECRET_FIELDS) {
-    if (typeof decrypted[field] === "string" && decrypted[field])
-      decrypted[field] = decryptToken(decrypted[field]);
-  }
-  return decrypted;
-}
-
-function formatStatusNotification(order) {
-  const messages = {
-    pending: "Aguardando pagamento na entrega/retirada.",
-    confirmed: "Confirmado! Em breve a cozinha começa a preparar.",
-    preparing: "Seu pedido está sendo preparado! 🍳",
-    ready: "Pronto para retirada/entrega! 🎉",
-    delivered: "Entregue. Bom apetite!",
-    cancelled: "Cancelado. Entre em contato se precisar.",
-  };
-  const msg =
-    messages[order.status] || `Status atualizado para ${order.status}.`;
-  return `Restaurante: Pedido #${order.id} — ${msg}`;
-}
+const {
+  notifyOrderStatusChange,
+} = require("../../../utils/notifications/orderStatus");
 
 const updateOrderStatus = {
   name: "updateOrderStatus",
@@ -83,24 +57,12 @@ const updateOrderStatus = {
           error || "erro desconhecido"
         }`;
 
-      let notification = "";
-      try {
-        const connector =
-          await ExternalCommunicationConnector.getStrict("whatsapp");
-        if (connector?.active) {
-          const config = decryptWhatsAppConfig(connector.config || {});
-          const messages = await formatStatusNotification(order);
-          await sendWhatsAppText({
-            phoneNumberId: config.phoneNumberId,
-            accessToken: config.accessToken,
-            to: order.customerPhone,
-            text: messages,
-          });
-          notification = " (cliente notificado via WhatsApp)";
-        }
-      } catch (notifyErr) {
-        notification = ` (falha ao notificar cliente: ${notifyErr.message})`;
-      }
+      const result = await notifyOrderStatusChange(order);
+      const notification = result.sent
+        ? " (cliente notificado via WhatsApp)"
+        : result.reason === "whatsapp_connector_inactive"
+          ? ""
+          : ` (falha ao notificar cliente: ${result.reason})`;
 
       return `Pedido #${order.id} atualizado para ${order.status}.${notification}`;
     } catch (error) {

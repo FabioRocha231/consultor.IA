@@ -1,4 +1,7 @@
 const { Order, DEFAULT_ORGANIZATION_ID } = require("../models/orders");
+const {
+  notifyOrderStatusChange,
+} = require("../utils/notifications/orderStatus");
 const { validatedRequest } = require("../utils/middleware/validatedRequest");
 const {
   isSingleUserMode,
@@ -126,6 +129,8 @@ function ordersEndpoints(app) {
           return error === "Order not found."
             ? ordersError(response, 404, error)
             : ordersError(response, 400, error);
+
+        await notifyOrderStatusChange(order);
         return response.status(200).json({ order });
       } catch (error) {
         console.error("Order status update failed:", error.message);
