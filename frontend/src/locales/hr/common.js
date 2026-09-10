@@ -339,6 +339,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "Postavke instance",
     invites: "Pozivnice",
     users: "Korisnici",

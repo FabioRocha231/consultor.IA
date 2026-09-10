@@ -339,6 +339,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "ການຕັ້ງຄ່າລະບົບ",
     invites: "ການເຊື້ອເຊີນ",
     users: "ຜູ້ໃຊ້",

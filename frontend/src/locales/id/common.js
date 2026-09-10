@@ -340,6 +340,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "Pengaturan Instance",
     invites: "Undangan",
     users: "Pengguna",

@@ -11,6 +11,7 @@ import {
   Nut,
   Toolbox,
   Plugs,
+  Receipt,
 } from "@phosphor-icons/react";
 import AgentIcon from "@/media/animations/agent-static.png";
 import useUser from "@/hooks/useUser";
@@ -348,6 +349,14 @@ const SidebarOptions = ({ user = null, t }) => (
           btnText={t("settings.menu.label")}
           icon={<List className="h-5 w-5 flex-shrink-0" />}
           href={paths.settings.menu()}
+          user={user}
+          flex={true}
+          roles={["admin", "manager"]}
+        />
+        <Option
+          btnText={t("settings.orders.label")}
+          icon={<Receipt className="h-5 w-5 flex-shrink-0" />}
+          href={paths.settings.orders()}
           user={user}
           flex={true}
           roles={["admin", "manager"]}

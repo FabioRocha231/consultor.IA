@@ -331,6 +331,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "Настройки экземпляра",
     invites: "Приглашение",
     users: "Пользователи",

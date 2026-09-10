@@ -329,6 +329,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "הגדרות מופע",
     invites: "הזמנות",
     users: "משתמשים",

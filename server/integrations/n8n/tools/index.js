@@ -1,6 +1,10 @@
 const { createLead } = require("./createLead");
 const { requestHumanSupport } = require("./requestHumanSupport");
 const { getMenu } = require("./getMenu");
+const { createOrder } = require("./createOrder");
+const { getOrderStatus } = require("./getOrderStatus");
+const { listMyOrders } = require("./listMyOrders");
+const { updateOrderStatus } = require("./updateOrderStatus");
 
 function toAibitatPlugin(tool) {
   return {
@@ -32,7 +36,20 @@ const n8nTools = {
     toAibitatPlugin(createLead),
     toAibitatPlugin(requestHumanSupport),
     toAibitatPlugin(getMenu),
+    toAibitatPlugin(createOrder),
+    toAibitatPlugin(getOrderStatus),
+    toAibitatPlugin(listMyOrders),
+    toAibitatPlugin(updateOrderStatus),
   ],
 };
 
-module.exports = { n8nTools, createLead, requestHumanSupport, getMenu };
+module.exports = {
+  n8nTools,
+  createLead,
+  requestHumanSupport,
+  getMenu,
+  createOrder,
+  getOrderStatus,
+  listMyOrders,
+  updateOrderStatus,
+};

@@ -330,6 +330,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "إعدادات المثيل",
     invites: "دعوات",
     users: "مستعملون",

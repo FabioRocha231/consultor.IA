@@ -601,3 +601,38 @@ model MenuItem {
   @@index([organizationId, available])
   @@map("menu_items")
 }
+
+model Order {
+  id             Int         @id @default(autoincrement())
+  organizationId String      @map("organization_id")
+  customerPhone  String      @map("customer_phone")
+  customerName   String      @map("customer_name")
+  status         String      @default("pending") // pending | confirmed | preparing | ready | delivered | cancelled
+  totalCents     Int         @map("total_cents")
+  currency       String      @default("BRL")
+  notes          String? // endereço de entrega (delivery) ou observações livres
+  idempotencyKey String      @unique @map("idempotency_key")
+  externalRef    String?     @map("external_ref") // p/ futuro integração com sistema externo
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  items OrderItem[]
+
+  @@index([organizationId, status, createdAt])
+  @@index([organizationId, customerPhone, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id             Int     @id @default(autoincrement())
+  orderId        Int     @map("order_id")
+  menuItemId     Int     @map("menu_item_id")
+  quantity       Int
+  unitPriceCents Int     @map("unit_price_cents")
+  notes          String?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_items")
+}

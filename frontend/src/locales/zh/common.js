@@ -328,6 +328,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "设置",
     invites: "邀请",
     users: "用户",

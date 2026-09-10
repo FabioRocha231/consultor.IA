@@ -330,6 +330,7 @@ const TRANSLATIONS = {
   },
   settings: {
     menu: null,
+    orders: null,
     title: "인스턴스 설정",
     invites: "초대",
     users: "사용자",

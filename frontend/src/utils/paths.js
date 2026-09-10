@@ -202,6 +202,9 @@ export default {
     menu: () => {
       return `/settings/menu`;
     },
+    orders: () => {
+      return `/settings/orders`;
+    },
     scheduledJobs: () => {
       return `/settings/scheduled-jobs`;
     },
