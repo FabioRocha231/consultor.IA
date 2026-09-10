@@ -58,6 +58,7 @@ Este diretório registra o reconhecimento arquitetural do fork do AnythingLLM e 
 | [36-sensitive-debug-runbook.md](./36-sensitive-debug-runbook.md) | Sensitive Debug Mode com admin gate e TTL |
 | [37-live-eval-runbook.md](./37-live-eval-runbook.md) | Live RAG evaluation runner e CLI admin |
 | [38-alerting-runbook.md](./38-alerting-runbook.md) | Grafana alerts com severity, windows e runbook |
+| [50-empresa-a-runbook.md](./50-empresa-a-runbook.md) | Operação do piloto Empresa A (setup, smoke, incident response) |
 | [32-trace-persistence-runbook.md](./32-trace-persistence-runbook.md) | Correlação mensagem/feedback com traces |
 | [31-admin-bootstrap-runbook.md](./31-admin-bootstrap-runbook.md) | Bootstrap do primeiro admin em um novo deployment |
 | [21-privacy-ci-gate.md](./21-privacy-ci-gate.md) | Privacy CI Gate (estático + network + dependency) |
