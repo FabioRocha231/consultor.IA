@@ -199,6 +199,9 @@ export default {
     whatsapp: () => {
       return `/settings/external-connections/whatsapp`;
     },
+    menu: () => {
+      return `/settings/menu`;
+    },
     scheduledJobs: () => {
       return `/settings/scheduled-jobs`;
     },

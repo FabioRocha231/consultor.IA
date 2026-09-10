@@ -339,6 +339,7 @@ const TRANSLATIONS = {
     goToWorkspace: 'Buka "{{workspace}}"',
   },
   settings: {
+    menu: null,
     title: "Pengaturan Instance",
     invites: "Undangan",
     users: "Pengguna",

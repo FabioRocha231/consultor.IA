@@ -331,6 +331,7 @@ const TRANSLATIONS = {
     refresh: "Tazelemek",
   },
   settings: {
+    menu: null,
     title: "Instance Ayarları",
     invites: "Davetler",
     users: "Kullanıcılar",

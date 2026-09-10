@@ -331,6 +331,7 @@ const TRANSLATIONS = {
     refresh: "Aggiorna",
   },
   settings: {
+    menu: null,
     title: "Impostazioni istanza",
     invites: "Inviti",
     users: "Utenti",

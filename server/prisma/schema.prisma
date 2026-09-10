@@ -581,3 +581,23 @@ model model_router_rules {
   @@index([router_id])
   @@index([router_id, enabled, priority])
 }
+
+model MenuItem {
+  id             Int      @id @default(autoincrement())
+  organizationId String   @map("organization_id")
+  category       String
+  name           String
+  description    String?
+  priceCents     Int      @map("price_cents")
+  currency       String   @default("BRL")
+  available      Boolean  @default(true)
+  position       Int      @default(0)
+  allergens      String?
+  photoUrl       String?  @map("photo_url")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([organizationId, category, position])
+  @@index([organizationId, available])
+  @@map("menu_items")
+}

@@ -327,6 +327,7 @@ const TRANSLATIONS = {
     refresh: "重新开始；更新",
   },
   settings: {
+    menu: null,
     title: "设置",
     invites: "邀请",
     users: "用户",

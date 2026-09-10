@@ -338,6 +338,7 @@ const TRANSLATIONS = {
     goToWorkspace: 'Ves a "{{workspace}}"',
   },
   settings: {
+    menu: null,
     title: "Configuració de la instància",
     invites: "Invitacions",
     users: "Usuaris",

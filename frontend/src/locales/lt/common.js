@@ -337,6 +337,7 @@ const TRANSLATIONS = {
     goToWorkspace: "Eiti į „{{workspace}}“",
   },
   settings: {
+    menu: null,
     title: "Sistemos nustatymai",
     invites: "Pakvietimai",
     users: "Vartotojai",

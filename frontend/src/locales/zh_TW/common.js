@@ -327,6 +327,7 @@ const TRANSLATIONS = {
     refresh: "重新整理",
   },
   settings: {
+    menu: null,
     title: "系統設定",
     invites: "邀請",
     users: "使用者",

@@ -330,6 +330,7 @@ const TRANSLATIONS = {
     refresh: "Atjaunot",
   },
   settings: {
+    menu: null,
     title: "Instances iestatījumi",
     invites: "Ielūgumi",
     users: "Lietotāji",

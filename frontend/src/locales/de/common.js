@@ -331,6 +331,7 @@ const TRANSLATIONS = {
     refresh: "Erfrischen",
   },
   settings: {
+    menu: null,
     title: "Instanzeinstellungen",
     invites: "Einladungen",
     users: "Benutzer",

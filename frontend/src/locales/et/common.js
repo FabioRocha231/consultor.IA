@@ -330,6 +330,7 @@ const TRANSLATIONS = {
     refresh: "Värskendada",
   },
   settings: {
+    menu: null,
     title: "Instantsi seaded",
     invites: "Kutsed",
     users: "Kasutajad",

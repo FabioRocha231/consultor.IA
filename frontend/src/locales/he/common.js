@@ -328,6 +328,7 @@ const TRANSLATIONS = {
     refresh: "רענן",
   },
   settings: {
+    menu: null,
     title: "הגדרות מופע",
     invites: "הזמנות",
     users: "משתמשים",

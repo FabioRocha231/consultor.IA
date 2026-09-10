@@ -332,6 +332,7 @@ const TRANSLATIONS = {
     refresh: "تازه‌سازی کردن",
   },
   settings: {
+    menu: null,
     title: "تنظیمات سامانه",
     invites: "دعوت‌نامه‌ها",
     users: "کاربران",

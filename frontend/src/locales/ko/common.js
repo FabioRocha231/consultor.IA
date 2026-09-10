@@ -329,6 +329,7 @@ const TRANSLATIONS = {
     refresh: "새롭게",
   },
   settings: {
+    menu: null,
     title: "인스턴스 설정",
     invites: "초대",
     users: "사용자",

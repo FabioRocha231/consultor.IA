@@ -345,6 +345,14 @@ const SidebarOptions = ({ user = null, t }) => (
           ]}
         />
         <Option
+          btnText={t("settings.menu.label")}
+          icon={<List className="h-5 w-5 flex-shrink-0" />}
+          href={paths.settings.menu()}
+          user={user}
+          flex={true}
+          roles={["admin", "manager"]}
+        />
+        <Option
           btnText={t("settings.channels")}
           icon={<Plugs className="h-5 w-5 flex-shrink-0" />}
           user={user}
