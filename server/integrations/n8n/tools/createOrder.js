@@ -1,6 +1,10 @@
 const { randomUUID } = require("crypto");
 const { Order, DEFAULT_ORGANIZATION_ID } = require("../../../models/orders");
 const { resolveOrganizationContext } = require("./context");
+const {
+  buildOrderConfirmationPayload,
+  INTERACTIVE_MARKER,
+} = require("../../whatsapp/interactive");
 
 function formatBRL(priceCents) {
   return (priceCents / 100).toLocaleString("pt-BR", {
@@ -87,9 +91,15 @@ const createOrder = {
       const itemSummary = order.items
         .map((item) => `${item.quantity}x #${item.menuItemId}`)
         .join(", ");
-      return `Pedido #${order.id} criado para ${order.customerName} (${order.customerPhone}). Total: R$ ${formatBRL(
+      const text = `Pedido #${order.id} criado para ${order.customerName} (${order.customerPhone}). Total: R$ ${formatBRL(
         order.totalCents
       )}. Itens: ${itemSummary}.`;
+      const interactive = buildOrderConfirmationPayload(order, {
+        bodyText: text,
+        footerText: "Confirme, cancele ou edite o pedido.",
+      });
+      if (this?.super) this.super.skipHandleExecution = true;
+      return `${INTERACTIVE_MARKER}${JSON.stringify({ text, interactive })}`;
     } catch (error) {
       return `[createOrder] Falha ao criar pedido: ${
         error?.message || String(error)
