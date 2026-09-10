@@ -28,6 +28,7 @@ storage/lancedb
 public/
 __tests__/**/models/*
 !__tests__/models/externalCommunicationConnector.test.js
+!__tests__/models/menuItems.test.js
 
 # For legacy copies of repo
 documents
