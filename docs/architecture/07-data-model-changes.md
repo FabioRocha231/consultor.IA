@@ -75,3 +75,63 @@ Booleano + reason em `workspace_chats` é suficiente; tabela separada só quando
 - Manter migrations Prisma incrementais (`server/prisma/migrations/`).
 - Fazer migration por deployment (A/B/C) com rollback testado.
 - Nunca rodar migration que combine dados entre empresas.
+
+## Fase Empresa A: menu e pedidos (PRs 46/47)
+
+### `MenuItem` (novo)
+
+```prisma
+model MenuItem {
+  id             Int      @id @default(autoincrement())
+  organizationId String   @map("organization_id")
+  category       String
+  name           String
+  description    String?
+  priceCents     Int      @map("price_cents")
+  currency       String   @default("BRL")
+  available      Boolean  @default(true)
+  position       Int      @default(0)
+  allergens      String?
+  photoUrl       String?  @map("photo_url")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+}
+```
+
+### `Order` (novo)
+
+```prisma
+model Order {
+  id             Int         @id @default(autoincrement())
+  organizationId String      @map("organization_id")
+  customerPhone  String      @map("customer_phone")
+  customerName   String      @map("customer_name")
+  status         String      @default("pending")
+  totalCents     Int         @map("total_cents")
+  currency       String      @default("BRL")
+  notes          String?
+  idempotencyKey String      @unique @map("idempotency_key")
+  externalRef    String?     @map("external_ref")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+}
+```
+
+### `OrderItem` (novo)
+
+```prisma
+model OrderItem {
+  id             Int  @id @default(autoincrement())
+  orderId        Int  @map("order_id")
+  menuItemId     Int  @map("menu_item_id")
+  quantity       Int
+  unitPriceCents Int  @map("unit_price_cents")
+  notes          String?
+}
+```
+
+- `OrderItem.orderId` é FK CASCADE.
+- `OrderItem.menuItemId` é referência inteira sem FK/relation Prisma; pedidos
+  históricos não quebram quando o item do cardápio muda ou é removido.
+- Idempotência fica em UNIQUE (`idempotency_key`), consultada sempre com
+  `organizationId`.
