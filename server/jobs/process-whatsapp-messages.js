@@ -5,7 +5,12 @@ const {
 } = require("../models/externalCommunicationConnector");
 const { Workspace } = require("../models/workspace");
 const { ApiChatHandler } = require("../utils/chats/apiChatHandler");
-const { sendWhatsAppText } = require("../integrations/whatsapp/client");
+const {
+  sendWhatsAppText,
+  sendWhatsAppList,
+  sendWhatsAppButtons,
+} = require("../integrations/whatsapp/client");
+const { INTERACTIVE_MARKER } = require("../integrations/whatsapp/interactive");
 const { decryptToken } = require("../utils/telegramBot/utils");
 const { log, conclude } = require("./helpers/index.js");
 
@@ -27,6 +32,20 @@ const PERMANENT_ERROR_PATTERNS = [
 
 function sanitizeError(error) {
   return String(error?.message || error).slice(0, 200);
+}
+
+function parseInteractiveResponse(text) {
+  if (typeof text !== "string" || !text.startsWith(INTERACTIVE_MARKER))
+    return null;
+  try {
+    const parsed = JSON.parse(text.slice(INTERACTIVE_MARKER.length));
+    return { interactive: parsed.interactive, fallbackText: parsed.text };
+  } catch {
+    return {
+      interactive: null,
+      fallbackText: text.slice(INTERACTIVE_MARKER.length),
+    };
+  }
 }
 
 function createWatchdog(
@@ -194,9 +213,7 @@ async function processRow(config, row) {
   if (!message?.id || !waId) throw new Error("Invalid queued payload fields");
 
   const text =
-    message.type === "text" && typeof message.text?.body === "string"
-      ? message.text.body
-      : null;
+    typeof message.text?.body === "string" ? message.text.body : null;
   if (!text?.trim()) {
     await sendWhatsAppText({
       phoneNumberId,
@@ -217,11 +234,33 @@ async function processRow(config, row) {
     sessionId: `whatsapp:${phoneNumberId}:${waId}`,
   });
   if (result?.textResponse) {
+    const interactive = parseInteractiveResponse(result.textResponse);
+    if (interactive?.interactive?.type === "list") {
+      await sendWhatsAppList({
+        phoneNumberId,
+        accessToken: config.accessToken,
+        to: waId,
+        ...interactive.interactive,
+      });
+      return;
+    }
+    if (interactive?.interactive?.type === "button") {
+      await sendWhatsAppButtons({
+        phoneNumberId,
+        accessToken: config.accessToken,
+        to: waId,
+        ...interactive.interactive,
+      });
+      return;
+    }
     await sendWhatsAppText({
       phoneNumberId,
       accessToken: config.accessToken,
       to: waId,
-      text: result.textResponse.slice(0, MAX_TEXT_LENGTH),
+      text: (interactive?.fallbackText || result.textResponse).slice(
+        0,
+        MAX_TEXT_LENGTH
+      ),
     });
   }
 }
@@ -278,6 +317,7 @@ module.exports = {
   processRow,
   sanitizeError,
   createWatchdog,
+  parseInteractiveResponse,
   isPermanentFailure,
   MAX_ATTEMPTS,
   RETRY_DELAYS_MS,

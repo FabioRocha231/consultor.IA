@@ -108,12 +108,27 @@ function extractWhatsAppMessages(payload) {
       const phoneNumberId = change.value.metadata?.phone_number_id;
       if (!phoneNumberId) continue;
       for (const message of change.value.messages) {
-        if (message?.id && message?.from)
+        if (message?.id && message?.from) {
+          const normalizedMessage = { ...message };
+          const interactive = normalizedMessage.interactive;
+          if (normalizedMessage.type === "interactive") {
+            if (
+              interactive?.type === "list_reply" &&
+              interactive.list_reply?.title
+            )
+              normalizedMessage.text = { body: interactive.list_reply.title };
+            else if (
+              interactive?.type === "button_reply" &&
+              interactive.button_reply?.title
+            )
+              normalizedMessage.text = { body: interactive.button_reply.title };
+          }
           messages.push({
             phoneNumberId,
             waId: message.from,
-            message,
+            message: normalizedMessage,
           });
+        }
       }
     }
   }
