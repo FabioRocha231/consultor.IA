@@ -7,6 +7,7 @@ import {
   USERNAME_MIN_LENGTH,
   USERNAME_MAX_LENGTH,
   USERNAME_PATTERN,
+  USERNAME_REGEX,
 } from "@/utils/username";
 import {
   ModalHeader,
@@ -19,14 +20,27 @@ import {
   ModalLabel,
 } from "@/components/lib/Modal";
 
+function friendlyError(rawError) {
+  if (!rawError) return "Erro desconhecido";
+  const message = String(rawError);
+  if (message.includes("Unexpected token"))
+    return "Erro de comunicação com o servidor. Tente novamente.";
+  if (message.toLowerCase().includes("unauthorized"))
+    return "Sessão expirada. Faça login novamente.";
+  return message;
+}
+
 export default function NewUserModal({ closeModal }) {
   const [error, setError] = useState(null);
+  const [username, setUsername] = useState("");
   const [role, setRole] = useState("default");
   const [messageLimit, setMessageLimit] = useState({
     enabled: false,
     limit: 10,
   });
   const { t } = useTranslation();
+  const isUsernameValid = USERNAME_REGEX.test(username);
+  const usernameError = username.length > 0 && !isUsernameValid;
 
   const handleCreate = async (e) => {
     setError(null);
@@ -38,7 +52,7 @@ export default function NewUserModal({ closeModal }) {
 
     const { user, error } = await Admin.newUser(data);
     if (!!user) window.location.reload();
-    setError(error);
+    setError(error ? friendlyError(error) : error);
   };
 
   const user = userFromStorage();
@@ -52,13 +66,20 @@ export default function NewUserModal({ closeModal }) {
           name="username"
           type="text"
           placeholder="User's username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           minLength={USERNAME_MIN_LENGTH}
           maxLength={USERNAME_MAX_LENGTH}
           pattern={USERNAME_PATTERN}
           required={true}
           autoComplete="off"
-          hint={t("common.username_requirements")}
+          hint={usernameError ? undefined : t("common.username_requirements")}
         />
+        {usernameError && (
+          <p className="text-red-400 text-sm">
+            {t("common.username_requirements")}
+          </p>
+        )}
         <ModalInput
           label="Password"
           name="password"
