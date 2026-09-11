@@ -385,6 +385,15 @@ const TRANSLATIONS = {
       loading: "Loading",
       price: "Price",
       actions: "Actions",
+      errors: {
+        invalidForm: "Please check the highlighted fields.",
+        categoryRequired: "Category is required.",
+        nameRequired: "Name is required.",
+        priceCentsInvalid: "Enter a non-negative integer.",
+      },
+      currency: {
+        locked: "BRL (fixed)",
+      },
     },
     orders: {
       label: "Orders",

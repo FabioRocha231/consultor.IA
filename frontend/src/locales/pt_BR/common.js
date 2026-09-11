@@ -372,6 +372,15 @@ const TRANSLATIONS = {
         allergens: "Alergênicos (texto livre)",
         photoUrl: "URL da foto",
       },
+      currency: {
+        locked: "BRL (fixo)",
+      },
+      errors: {
+        invalidForm: "Verifique os campos destacados.",
+        categoryRequired: "Informe a categoria.",
+        nameRequired: "Informe o nome.",
+        priceCentsInvalid: "Informe um valor inteiro maior ou igual a zero.",
+      },
       empty: "Nenhum item cadastrado.",
       confirmDelete: "Excluir este item?",
       loading: "Carregando",

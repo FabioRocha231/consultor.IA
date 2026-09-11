@@ -24,6 +24,7 @@ export default function MenuEditor({ item = null, onClose, onSaved }) {
   const isEditing = Boolean(item);
   const [form, setForm] = useState(initialForm(item));
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const handleChange = (event) => {
     const { name, type, value, checked } = event.target;
@@ -31,18 +32,34 @@ export default function MenuEditor({ item = null, onClose, onSaved }) {
       ...previous,
       [name]: type === "checkbox" ? checked : value,
     }));
+    setErrors((previous) => {
+      if (!previous[name]) return previous;
+      const next = { ...previous };
+      delete next[name];
+      return next;
+    });
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const nextErrors = {};
     const priceCents = Number(form.priceCents);
+    if (!form.category.trim()) {
+      nextErrors.category = t("settings.menu.errors.categoryRequired");
+    }
+    if (!form.name.trim()) {
+      nextErrors.name = t("settings.menu.errors.nameRequired");
+    }
     if (
-      !form.category.trim() ||
-      !form.name.trim() ||
+      form.priceCents.trim() === "" ||
       !Number.isInteger(priceCents) ||
       priceCents < 0
     ) {
-      showToast(t("settings.menu.fields.priceCents"), "error");
+      nextErrors.priceCents = t("settings.menu.errors.priceCentsInvalid");
+    }
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      showToast(t("settings.menu.errors.invalidForm"), "error");
       return;
     }
 
@@ -72,7 +89,7 @@ export default function MenuEditor({ item = null, onClose, onSaved }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-y-5">
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-y-5">
       <ModalHeader
         title={
           isEditing
@@ -87,6 +104,7 @@ export default function MenuEditor({ item = null, onClose, onSaved }) {
           name="category"
           value={form.category}
           onChange={handleChange}
+          error={errors.category}
           required
         />
         <Field
@@ -94,6 +112,7 @@ export default function MenuEditor({ item = null, onClose, onSaved }) {
           name="name"
           value={form.name}
           onChange={handleChange}
+          error={errors.name}
           required
         />
         <Field
@@ -103,25 +122,28 @@ export default function MenuEditor({ item = null, onClose, onSaved }) {
           onChange={handleChange}
           multiline
         />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field
             label={t("settings.menu.fields.priceCents")}
             name="priceCents"
             value={form.priceCents}
             onChange={handleChange}
+            error={errors.priceCents}
             type="number"
             min="0"
             step="1"
             required
           />
-          <Field
-            label={t("settings.menu.fields.currency")}
-            name="currency"
-            value={form.currency}
-            onChange={handleChange}
-          />
+          <div className="flex flex-col gap-1.5 w-full">
+            <span className="text-sm text-zinc-300 light:text-slate-600">
+              {t("settings.menu.fields.currency")}
+            </span>
+            <span className="flex h-9 w-full items-center rounded-lg border border-zinc-700 light:border-slate-300 !bg-zinc-800 light:!bg-slate-100 px-3 text-sm font-medium !text-zinc-100 light:!text-slate-900">
+              {t("settings.menu.currency.locked")}
+            </span>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field
             label={t("settings.menu.fields.available")}
             name="available"
@@ -150,18 +172,18 @@ export default function MenuEditor({ item = null, onClose, onSaved }) {
           value={form.photoUrl}
           onChange={handleChange}
         />
-        <div className="flex items-center justify-end gap-x-2 pt-4">
+        <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="border-none h-9 px-4 rounded-lg text-sm font-medium text-zinc-300 hover:bg-white/10"
+            className="border-none h-9 w-full sm:w-auto px-4 rounded-lg text-sm font-medium text-zinc-300 light:text-slate-600 hover:bg-white/10 light:hover:bg-slate-100"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="border-none flex items-center gap-2 h-9 px-5 rounded-lg bg-zinc-50 text-zinc-950 light:bg-slate-900 light:text-white text-sm font-medium hover:bg-zinc-200 light:hover:bg-slate-800"
+            className="border-none flex w-full sm:w-auto items-center justify-center gap-2 h-9 px-5 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 disabled:opacity-50"
           >
             {saving && <CircleNotch size={16} className="animate-spin" />}
             Salvar
@@ -179,31 +201,67 @@ function Field({
   onChange,
   type = "text",
   multiline = false,
+  error,
   ...props
 }) {
+  const isCheckbox = type === "checkbox";
+  const errorId = `${name}-error`;
   const className =
-    "w-full h-9 px-3 rounded-lg bg-zinc-800 light:bg-slate-100 border border-zinc-700 light:border-slate-300 text-sm text-zinc-100 light:text-slate-900 outline-none focus:border-zinc-500";
+    "w-full h-9 px-3 rounded-lg !bg-zinc-800 light:!bg-slate-100 border text-sm !text-zinc-100 light:!text-slate-900 outline-none focus:border-zinc-500 " +
+    (error
+      ? "border-red-500 light:border-red-500"
+      : "border-zinc-700 light:border-slate-300");
+
   return (
-    <label className="flex flex-col gap-1.5 text-sm text-zinc-300 light:text-slate-600">
-      {label}
-      {multiline ? (
-        <textarea
-          name={name}
-          value={value}
-          onChange={onChange}
-          rows={3}
-          className={`${className} h-auto py-2`}
-        />
+    <div className="flex flex-col gap-1.5 w-full">
+      {isCheckbox ? (
+        <label className="flex min-h-9 w-full items-center gap-2 cursor-pointer text-sm text-zinc-300 light:text-slate-600">
+          <input
+            type="checkbox"
+            name={name}
+            value="on"
+            checked={Boolean(value)}
+            onChange={onChange}
+            className="h-4 w-4 accent-emerald-600"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? errorId : undefined}
+            {...props}
+          />
+          <span>{label}</span>
+        </label>
       ) : (
-        <input
-          type={type}
-          name={name}
-          value={type === "checkbox" ? "on" : value}
-          checked={type === "checkbox" ? Boolean(value) : undefined}
-          onChange={onChange}
-          {...props}
-        />
+        <label className="flex flex-col gap-1.5 text-sm text-zinc-300 light:text-slate-600">
+          <span>{label}</span>
+          {multiline ? (
+            <textarea
+              name={name}
+              value={value}
+              onChange={onChange}
+              rows={3}
+              className={`${className} h-auto min-h-[88px] py-2 resize-y`}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? errorId : undefined}
+              {...props}
+            />
+          ) : (
+            <input
+              type={type}
+              name={name}
+              value={value}
+              onChange={onChange}
+              className={className}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? errorId : undefined}
+              {...props}
+            />
+          )}
+        </label>
       )}
-    </label>
+      {error && (
+        <p id={errorId} className="text-xs text-red-500 light:text-red-600">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
