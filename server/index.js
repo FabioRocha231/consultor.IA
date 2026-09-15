@@ -61,6 +61,10 @@ const { dashboardEndpoints } = require("./endpoints/dashboard");
 const { evalEndpoints } = require("./endpoints/eval");
 const { httpMetricsMiddleware } = require("./utils/middleware/httpMetrics");
 const app = express();
+// Behind a reverse proxy (Caddy/Traefik) request.ip is the proxy address,
+// which turns per-IP rate limits into global ones. TRUST_PROXY = proxy hops.
+if (process.env.TRUST_PROXY)
+  app.set("trust proxy", Number(process.env.TRUST_PROXY));
 const apiRouter = express.Router();
 const FILE_LIMIT = "3GB";
 

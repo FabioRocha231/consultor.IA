@@ -1,0 +1,6 @@
+# HTTPS certificate is issued automatically for $DOMAIN (Let's Encrypt).
+# DNS for the domain must point to this server, ports 80 and 443 open.
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy app:3001
+}
