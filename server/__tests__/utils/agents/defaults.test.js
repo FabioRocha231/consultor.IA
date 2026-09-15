@@ -190,4 +190,38 @@ describe("WORKSPACE_AGENT.getDefinition", () => {
     expect(definition.functions).not.toContain("n8n-tools#createLead");
     expect(definition.functions).not.toContain("n8n-tools#requestHumanSupport");
   });
+
+  it("only includes menu/order tools for enabled modules", async () => {
+    const original = process.env.ENABLED_MODULES;
+    Organization.get.mockResolvedValue({
+      id: "org-1",
+      n8nWebhookUrl: "https://org.n8n.cloud/webhook/test",
+    });
+    const workspace = { id: 2, organizationId: "org-1", openAiPrompt: null };
+
+    try {
+      delete process.env.ENABLED_MODULES;
+      let definition = await WORKSPACE_AGENT.getDefinition(
+        "openai",
+        workspace,
+        null
+      );
+      expect(definition.functions).toContain("n8n-tools#createLead");
+      expect(definition.functions).not.toContain("n8n-tools#getMenu");
+      expect(definition.functions).not.toContain("n8n-tools#createOrder");
+
+      process.env.ENABLED_MODULES = "menu,orders";
+      definition = await WORKSPACE_AGENT.getDefinition(
+        "openai",
+        workspace,
+        null
+      );
+      expect(definition.functions).toEqual(
+        expect.arrayContaining(["n8n-tools#getMenu", "n8n-tools#createOrder"])
+      );
+    } finally {
+      if (original === undefined) delete process.env.ENABLED_MODULES;
+      else process.env.ENABLED_MODULES = original;
+    }
+  });
 });

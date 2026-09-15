@@ -36,7 +36,7 @@ describe("notifyOrderStatusChange helper", () => {
       phoneNumberId: "123",
       accessToken: "token",
       to: "5511999",
-      text: "Restaurante: Pedido #7 — Seu pedido está sendo preparado! 🍳",
+      text: "Pedido #7 — Seu pedido está sendo preparado! 🍳",
     });
   });
 
@@ -67,10 +67,10 @@ describe("notifyOrderStatusChange helper", () => {
 
   test("formatStatusNotification renders PT-BR status messages", () => {
     expect(formatStatusNotification({ id: 1, status: "ready" })).toBe(
-      "Restaurante: Pedido #1 — Pronto para retirada/entrega! 🎉"
+      "Pedido #1 — Pronto para retirada/entrega! 🎉"
     );
     expect(formatStatusNotification({ id: 1, status: "unknown" })).toBe(
-      "Restaurante: Pedido #1 — Status atualizado para unknown."
+      "Pedido #1 — Status atualizado para unknown."
     );
   });
 });

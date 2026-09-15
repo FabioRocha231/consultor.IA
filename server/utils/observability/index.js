@@ -30,6 +30,10 @@ function start(options = {}) {
 
   if (options.endpoint)
     process.env.OTEL_EXPORTER_OTLP_ENDPOINT = options.endpoint;
+  // No collector configured (lean deploy without the observability profile):
+  // skip exporters instead of retrying a missing host. The in-memory company
+  // dashboard counters in ./ai.js keep working since they don't need the SDK.
+  if (!process.env.OTEL_EXPORTER_OTLP_ENDPOINT) return { disabled: true, sdk };
 
   const serviceName =
     options.service || process.env.OTEL_SERVICE_NAME || "consultor-ia";

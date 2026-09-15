@@ -25,7 +25,7 @@ function formatStatusNotification(order) {
   };
   const msg =
     messages[order.status] || `Status atualizado para ${order.status}.`;
-  return `Restaurante: Pedido #${order.id} — ${msg}`;
+  return `Pedido #${order.id} — ${msg}`;
 }
 
 /**
