@@ -77,6 +77,11 @@ async function bootstrapAdmin() {
     return { created: false };
   }
 
+  // Enable login BEFORE creating the admin: if the user insert then fails the
+  // instance is locked (fail closed) and the next boot retries, instead of an
+  // existing admin making every later boot skip this and leaving it open.
+  await enableMultiUserMode();
+
   const username = String(email).trim().toLowerCase();
   const hashedPassword = await bcrypt.hash(String(password), 10);
   await prisma.users.create({
@@ -89,7 +94,6 @@ async function bootstrapAdmin() {
   });
 
   console.log(`created initial admin user: ${username}`);
-  await enableMultiUserMode();
   return { created: true };
 }
 

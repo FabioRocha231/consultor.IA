@@ -68,6 +68,22 @@ describe("prisma admin seed", () => {
     ]);
   });
 
+  test("fails closed: login stays enabled if creating the admin fails", async () => {
+    const { PrismaClient } = require("@prisma/client");
+    const prisma = new PrismaClient();
+    prisma.users.create.mockRejectedValueOnce(new Error("db down"));
+    process.env.ADMIN_EMAIL = "admin@test.com";
+    process.env.ADMIN_PASSWORD = "SomeLongPassword123!";
+    process.env.JWT_SECRET = "a".repeat(32);
+
+    await expect(bootstrapAdmin()).rejects.toThrow("db down");
+
+    expect(users).toHaveLength(0);
+    expect(settings).toEqual([
+      { id: 1, label: "multi_user_mode", value: "true" },
+    ]);
+  });
+
   test("leaves multi-user mode untouched without JWT_SECRET or when admin exists", async () => {
     process.env.ADMIN_EMAIL = "admin@test.com";
     process.env.ADMIN_PASSWORD = "SomeLongPassword123!";
