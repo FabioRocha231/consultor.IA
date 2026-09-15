@@ -10,6 +10,10 @@ Pré-requisitos:
 - consultor.IA deployado em Dokploy (ver [31-admin-bootstrap-runbook.md](./31-admin-bootstrap-runbook.md))
 - `DB_URL`, `JWT_SECRET` e credenciais LLM configuradas
 - Acesso admin ao painel
+- `ENABLED_MODULES=menu,orders` no env do deployment (sem isso cardápio,
+  pedidos e as tools correspondentes ficam desligados)
+- Opcional: `COMPOSE_PROFILES=observability` e
+  `OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318` para subir Grafana/Alloy
 
 ## 1. Setup inicial
 

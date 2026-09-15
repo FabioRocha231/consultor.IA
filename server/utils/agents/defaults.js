@@ -6,6 +6,7 @@ const ImportedPlugin = require("./imported");
 const { AgentFlows } = require("../agentFlows");
 const MCPCompatibilityLayer = require("../MCP");
 const { Organization } = require("../../models/organization");
+const { isToolEnabled } = require("../modules");
 
 // This is a list of skills that are built-in and default enabled.
 const DEFAULT_SKILLS = [
@@ -110,7 +111,9 @@ async function n8nToolsIfConfigured(workspace = null) {
   const organization = await Organization.get(workspace.organizationId);
   if (!organization?.n8nWebhookUrl) return [];
   const parent = AgentPlugins.n8nTools;
-  return parent.plugin.map((child) => `${parent.name}#${child.name}`);
+  return parent.plugin
+    .filter((child) => isToolEnabled(child.name))
+    .map((child) => `${parent.name}#${child.name}`);
 }
 
 /**

@@ -106,7 +106,7 @@ describe("updateOrderStatus tool", () => {
       phoneNumberId: "123",
       accessToken: "token",
       to: "5511999999999",
-      text: "Restaurante: Pedido #1 — Confirmado! Em breve a cozinha começa a preparar.",
+      text: "Pedido #1 — Confirmado! Em breve a cozinha começa a preparar.",
     });
   });
 

@@ -32,6 +32,13 @@ export default function SettingsSidebar() {
   const sidebarRef = useRef(null);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showBgOverlay, setShowBgOverlay] = useState(false);
+  const [modules, setModules] = useState([]);
+
+  useEffect(() => {
+    System.keys().then((settings) =>
+      setModules(settings?.EnabledModules ?? [])
+    );
+  }, []);
 
   useEffect(() => {
     function handleBg() {
@@ -109,7 +116,7 @@ export default function SettingsSidebar() {
               <div className="h-full flex flex-col w-full justify-between pt-4 overflow-y-scroll no-scroll">
                 <div className="h-auto md:sidebar-items">
                   <div className="flex flex-col gap-y-4 pb-[60px] overflow-y-scroll no-scroll">
-                    <SidebarOptions user={user} t={t} />
+                    <SidebarOptions user={user} t={t} modules={modules} />
                     <div className="h-[1.5px] bg-[#3D4147] mx-3 mt-[14px]" />
                     <SupportEmail />
                     <Link
@@ -160,7 +167,7 @@ export default function SettingsSidebar() {
             <div className="relative h-[calc(100%-60px)] flex flex-col w-full justify-between pt-[10px] overflow-y-scroll no-scroll">
               <div className="h-auto sidebar-items">
                 <div className="flex flex-col gap-y-2 pb-[60px] overflow-y-scroll no-scroll">
-                  <SidebarOptions user={user} t={t} />
+                  <SidebarOptions user={user} t={t} modules={modules} />
                   <div className="h-[1.5px] bg-[#3D4147] mx-3 mt-[14px]" />
                   <SupportEmail />
                   <Link
@@ -212,7 +219,7 @@ function SupportEmail() {
   );
 }
 
-const SidebarOptions = ({ user = null, t }) => (
+const SidebarOptions = ({ user = null, t, modules = [] }) => (
   <CanViewChatHistoryProvider>
     {({ viewable: canViewChatHistory }) => (
       <>
@@ -351,6 +358,7 @@ const SidebarOptions = ({ user = null, t }) => (
           href={paths.settings.menu()}
           user={user}
           flex={true}
+          hidden={!modules.includes("menu")}
           roles={["admin", "manager"]}
         />
         <Option
@@ -359,6 +367,7 @@ const SidebarOptions = ({ user = null, t }) => (
           href={paths.settings.orders()}
           user={user}
           flex={true}
+          hidden={!modules.includes("orders")}
           roles={["admin", "manager"]}
         />
         <Option
