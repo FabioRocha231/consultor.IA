@@ -19,6 +19,13 @@ jest.mock("@prisma/client", () => {
         settings.push(setting);
         return setting;
       }),
+      upsert: jest.fn(async ({ where, update, create }) => {
+        const existing = settings.find((s) => s.label === where.label);
+        if (existing) return Object.assign(existing, update);
+        const setting = { id: settings.length + 1, ...create };
+        settings.push(setting);
+        return setting;
+      }),
     },
     users: {
       findFirst: jest.fn(async ({ where }) => {
@@ -45,6 +52,31 @@ describe("prisma admin seed", () => {
     settings.length = 0;
     delete process.env.ADMIN_EMAIL;
     delete process.env.ADMIN_PASSWORD;
+    delete process.env.JWT_SECRET;
+  });
+
+  test("enables multi-user mode when it creates the admin and JWT_SECRET is set", async () => {
+    settings.push({ id: 1, label: "multi_user_mode", value: "false" });
+    process.env.ADMIN_EMAIL = "admin@test.com";
+    process.env.ADMIN_PASSWORD = "SomeLongPassword123!";
+    process.env.JWT_SECRET = "a".repeat(32);
+
+    await bootstrapAdmin();
+
+    expect(settings).toEqual([
+      { id: 1, label: "multi_user_mode", value: "true" },
+    ]);
+  });
+
+  test("leaves multi-user mode untouched without JWT_SECRET or when admin exists", async () => {
+    process.env.ADMIN_EMAIL = "admin@test.com";
+    process.env.ADMIN_PASSWORD = "SomeLongPassword123!";
+    await bootstrapAdmin();
+    expect(settings).toHaveLength(0);
+
+    process.env.JWT_SECRET = "a".repeat(32);
+    await bootstrapAdmin();
+    expect(settings).toHaveLength(0);
   });
 
   test("skips silently when admin env vars are not set", async () => {

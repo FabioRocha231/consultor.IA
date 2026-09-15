@@ -89,7 +89,28 @@ async function bootstrapAdmin() {
   });
 
   console.log(`created initial admin user: ${username}`);
+  await enableMultiUserMode();
   return { created: true };
+}
+
+// Without multi-user mode and without AUTH_TOKEN, validatedRequest accepts
+// every request anonymously, so a bootstrapped admin must switch the instance
+// to login-required mode. Only runs for a freshly created admin: there is no
+// single-user data to migrate yet (see POST /system/enable-multi-user).
+async function enableMultiUserMode() {
+  if (!process.env.JWT_SECRET) {
+    console.warn(
+      "JWT_SECRET is not set: multi-user mode NOT enabled, the instance has no login."
+    );
+    return false;
+  }
+  await prisma.system_settings.upsert({
+    where: { label: "multi_user_mode" },
+    update: { value: "true" },
+    create: { label: "multi_user_mode", value: "true" },
+  });
+  console.log("multi-user mode enabled");
+  return true;
 }
 
 async function main() {
